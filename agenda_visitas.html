@@ -1,0 +1,1729 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda do Supervisor · Opella</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Carlito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     Identidade visual OPELLA (Design System Opella / opella-layer.css)
+     Bold Green #042B0B · Warm White #F7EFE6 · Challenger Pink #FF78D2
+     Para outro cliente, troque só as variáveis de :root.
+     ===================================================================== */
+  :root{
+    --o-green:#042B0B; --o-green-90:#263F26; --o-green-80:#3D553E; --o-green-70:#546955;
+    --o-green-50:#859486; --o-green-40:#9EAA9E; --o-green-30:#B6BFB7; --o-green-20:#CED5CE; --o-green-10:#E7EAE7;
+    --o-warm:#F7EFE6; --o-pink:#FF78D2; --o-pink-ink:#B0267F; --o-pink-mark:#C2338F;
+
+    --bg:var(--o-warm);
+    --surface:#ffffff;
+    --surface-2:#FBF7F2;
+    --ink:var(--o-green);
+    --muted:var(--o-green-70);
+    --line:rgba(4,43,11,.12);
+    --line-soft:rgba(4,43,11,.08);
+    --accent:var(--o-green);            /* ação principal */
+    --accent-ink:#ffffff;
+    --accent-soft:var(--o-green-10);
+    --mark:var(--o-pink-mark);          /* marcadores (dia do promotor) */
+    --success:#1F7A4F;
+    --danger:#B3261E;
+    --danger-soft:#FBEAE8;
+    --daysel-bg:var(--o-green);
+    --daysel-ink:#ffffff;
+    --dest-ink:var(--o-pink-ink);       /* loja destaque: rosa Opella */
+    --dest-bg:rgba(255,120,210,.08);
+    --dest-line:rgba(194,51,143,.35);
+    --side-bg:var(--o-green);
+    --side-ink:var(--o-green-10);
+    --side-muted:var(--o-green-40);
+    --side-line:rgba(247,239,230,.14);
+    --shadow:0 1px 2px rgba(4,43,11,.05), 0 1px 1px rgba(4,43,11,.03);
+    --shadow-2:0 18px 40px -16px rgba(4,43,11,.26), 0 2px 8px rgba(4,43,11,.06);
+    --radius:12px;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --sans: Calibri, "Carlito", "Segoe UI", -apple-system, Arial, sans-serif;
+    --display: "Montserrat", "Segoe UI", system-ui, sans-serif;
+    color-scheme: light;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ min-height:100%; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:rgba(255,120,210,.25); }
+  button, input, select, textarea{ font-family:inherit; }
+  a{ color:inherit; }
+  h1,h2,h3,h4{ font-family:var(--display); }
+  :focus-visible{ outline:2px solid var(--mark); outline-offset:2px; }
+  #sidebar :focus-visible{ outline-color:var(--o-pink); }
+
+  .eyebrow{
+    text-transform:uppercase; letter-spacing:.08em; font-size:11px; font-weight:700;
+    color:var(--muted);
+  }
+
+  /* ---------- Barra de marca (topo) ---------- */
+  .brandbar{
+    height:64px; background:var(--surface); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:16px; padding:0 24px;
+  }
+  .brandbar img{ display:block; width:auto; }
+  .brandbar .logo-opella{ height:22px; }
+  .brandbar .logo-spot{ height:18px; padding-left:16px; border-left:1px solid var(--line); box-sizing:content-box; }
+  .brandbar .titulo{
+    margin-left:auto; font-family:var(--display); font-weight:600; font-size:14px;
+    color:var(--ink); letter-spacing:-.01em;
+  }
+
+  /* ---------- Painéis ---------- */
+  .panel{ margin-bottom:20px; }
+  .panel > .tag{
+    display:flex; align-items:center; gap:8px; margin:0 0 8px 2px;
+    font-family:var(--display); font-size:14px; font-weight:600; color:var(--ink); letter-spacing:-.01em;
+  }
+  .panel > .tag::before{ content:""; width:8px; height:8px; border-radius:50%; background:var(--o-pink); flex:0 0 auto; }
+  .panel-body{
+    background:var(--surface); border:1px solid var(--line-soft); border-radius:var(--radius);
+    padding:16px; box-shadow:var(--shadow);
+  }
+
+  /* ---------- Tela de carga manual (fallback) ---------- */
+  #intake{ min-height:70vh; display:flex; align-items:center; justify-content:center; padding:24px 16px; }
+  .intake-card{
+    width:100%; max-width:560px; background:var(--surface); border:1px solid var(--line-soft);
+    border-radius:16px; box-shadow:var(--shadow-2); padding:32px 28px 28px;
+  }
+  .intake-card h1{ font-size:21px; font-weight:700; margin:10px 0 6px; text-wrap:balance; letter-spacing:-.02em; }
+  .intake-card p.lede{ color:var(--muted); margin:0 0 24px; max-width:48ch; }
+  .drop{
+    display:block; border:1.5px dashed var(--line); border-radius:10px; padding:28px 20px;
+    text-align:center; cursor:pointer; transition:border-color .15s, background .15s; background:var(--surface-2);
+  }
+  .drop.drag{ border-color:var(--accent); background:var(--accent-soft); }
+  .drop svg{ opacity:.55; margin-bottom:8px; }
+  .drop .hint{ font-size:13px; color:var(--muted); margin-top:4px; }
+  .drop input[type="file"]{ display:none; }
+  .or-row{ display:flex; align-items:center; gap:10px; margin:18px 0 12px; color:var(--muted); font-size:13px; }
+  .or-row::before, .or-row::after{ content:""; flex:1; height:1px; background:var(--line); }
+  textarea#pasteArea{
+    width:100%; min-height:90px; resize:vertical; border-radius:8px; border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink); padding:10px 12px; font:12px var(--mono);
+  }
+  #intakeActions{ display:flex; justify-content:flex-end; margin-top:14px; }
+  #intakeError{ color:var(--danger); font-size:13px; margin-top:10px; min-height:1em; }
+  .fileMeta{ font-size:13px; color:var(--success); margin-top:10px; display:none; align-items:center; gap:6px; }
+
+  /* ---------- Botões ---------- */
+  .btn{
+    appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    border-radius:8px; padding:9px 14px; font-size:14px; font-weight:700; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .btn:hover{ border-color:var(--o-green-50); }
+  .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .btn.primary:hover{ background:var(--o-green-90); border-color:var(--o-green-90); }
+  .btn.ghost{ background:transparent; border-color:transparent; color:var(--muted); }
+  .btn.ghost:hover{ color:var(--ink); border-color:var(--line); }
+  .btn.small{ padding:6px 11px; font-size:13px; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn.danger{ background:transparent; border-color:rgba(179,38,30,.45); color:var(--danger); }
+  .btn.danger:hover:not(:disabled){ background:var(--danger-soft); border-color:var(--danger); }
+  .btn.danger-solid{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  .btn.danger-solid:hover{ filter:brightness(1.08); }
+
+  /* ---------- Estrutura ---------- */
+  #app{ display:none; gap:20px; padding:20px 20px 0 0; align-items:flex-start; }
+  #app.show{ display:flex; }
+
+  /* Barra lateral em Bold Green, como no Design System */
+  #sidebar{
+    width:290px; flex:0 0 auto; background:var(--side-bg); color:var(--side-ink);
+    border-radius:0 16px 16px 0; display:flex; flex-direction:column; padding:18px 18px 20px; gap:16px;
+    position:sticky; top:20px; max-height:calc(100vh - 40px); overflow-y:auto;
+  }
+  #sidebar .eyebrow{ color:var(--side-muted); }
+  .side-title{ font-size:12.5px; color:var(--side-muted); }
+  .side-title b{ display:block; color:#fff; font-family:var(--display); font-size:15px; font-weight:600; margin-bottom:2px; }
+  .side-sep{ height:1px; background:var(--side-line); margin:0 -4px; }
+  select#supSelect{
+    width:100%; padding:9px 10px; border-radius:8px; border:0; margin-top:6px;
+    background:#fff; color:var(--o-green); font-size:14px; font-weight:700;
+  }
+  .filter-select{
+    width:100%; padding:7px 9px; border-radius:8px; border:0;
+    background:rgba(247,239,230,.10); color:#fff; font-size:13px;
+  }
+  .filter-select option{ color:var(--o-green); background:#fff; }
+  .stat-block{ display:flex; flex-direction:column; gap:5px; }
+  .stat-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; }
+  .stat-row .n{ font-family:var(--display); font-variant-numeric:tabular-nums; font-weight:700; color:#fff; }
+  .bar{ height:6px; border-radius:4px; background:rgba(247,239,230,.14); overflow:hidden; flex:1; }
+  .bar > i{ display:block; height:100%; background:var(--o-warm); border-radius:4px; transition:width .2s; }
+  #statDestaqueBar{ background:var(--o-pink); }
+  #statPromoBar{ background:var(--o-green-40); }
+  .bar-row{ display:flex; align-items:center; gap:8px; }
+  .bar-pct{ font-size:11.5px; color:var(--side-muted); font-variant-numeric:tabular-nums; min-width:32px; text-align:right; }
+  .day-mini{ display:flex; gap:5px; }
+  .day-mini .d{
+    flex:1; text-align:center; font-size:11.5px; padding:5px 0; border-radius:6px;
+    background:rgba(247,239,230,.07); color:var(--side-muted);
+  }
+  .day-mini .d b{ display:block; font-family:var(--display); font-size:13px; color:#fff; font-weight:700; }
+  .cdd-filters{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip-filter{
+    font:inherit; font-size:12px; padding:4px 10px; border-radius:99px; border:1px solid var(--side-line);
+    background:transparent; color:var(--side-ink); cursor:pointer; user-select:none;
+  }
+  .chip-filter:hover{ border-color:var(--side-muted); }
+  .chip-filter.active{ background:var(--o-warm); border-color:var(--o-warm); color:var(--o-green); font-weight:700; }
+  .filters-head{ display:flex; align-items:center; justify-content:space-between; }
+  .filters-clear{
+    font:inherit; font-size:12px; background:none; border:0; color:var(--o-pink); cursor:pointer; padding:0;
+    text-decoration:underline; text-underline-offset:2px;
+  }
+  .filters{ display:flex; flex-direction:column; gap:10px; }
+  .filters label.eyebrow{ display:block; margin-bottom:4px; }
+  .side-actions{ margin-top:auto; display:flex; flex-direction:column; gap:8px; padding-top:14px; border-top:1px solid var(--side-line); }
+  .side-actions .btn.primary{ background:var(--o-pink); border-color:var(--o-pink); color:var(--o-green); }
+  .side-actions .btn.primary:hover:not(:disabled){ filter:brightness(1.06); }
+  .side-actions .btn.ghost{ color:var(--side-ink); }
+  .side-actions .btn.ghost:hover{ color:#fff; border-color:var(--side-line); }
+  .side-actions .btn.primary:disabled{ background:rgba(247,239,230,.10); border-color:transparent; color:var(--side-muted); opacity:1; }
+  .more-toggle{ display:none; }
+  .side-more{ display:flex; flex-direction:column; gap:16px; }
+  .export-hint{ font-size:12px; color:var(--side-muted); margin:-2px 0 2px; line-height:1.35; text-align:center; }
+  .export-hint.ready{ color:#9FE3BF; font-weight:700; }
+  .destaque-star{ color:var(--dest-ink); font-weight:700; margin-right:4px; }
+  #sidebar .destaque-star{ color:var(--o-pink); }
+
+  #main{ flex:1; min-width:0; padding:0 0 60px; }
+  .topbar{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+  .topbar h1{ font-size:24px; margin:2px 0 4px; letter-spacing:-.02em; font-weight:700; }
+  .topbar .sub{ color:var(--muted); font-size:14px; max-width:70ch; }
+  .prazo{
+    display:inline-flex; align-items:center; gap:6px; margin-top:10px; font-size:13px; font-weight:700;
+    color:var(--o-pink-ink); background:rgba(255,120,210,.13); padding:4px 10px; border-radius:99px;
+  }
+  .prazo:empty{ display:none; }
+
+  .store-row{
+    display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center;
+    padding:10px 12px; border:1px solid var(--line-soft); border-radius:10px; background:var(--surface);
+    margin-bottom:6px; position:relative;
+  }
+  .store-row.has-days{ border-color:var(--o-green-30); background:var(--surface-2); }
+  .store-row .info{ min-width:0; }
+  .store-row .remove-x{
+    position:absolute; top:-7px; right:-7px; width:22px; height:22px; border-radius:50%;
+    background:var(--o-green); color:#fff; border:2px solid var(--surface);
+    font-size:12px; line-height:1; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-weight:700; padding:0;
+  }
+  .store-row .remove-x:hover{ background:var(--danger); }
+  .store-row .loja{ font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .store-row .meta{ font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .store-row .meta .sep{ margin:0 5px; opacity:.5; }
+  .store-row.destaque{ background:var(--dest-bg); border-color:var(--dest-line); }
+  .days{ display:flex; gap:4px; flex:0 0 auto; }
+  .day-btn{
+    width:40px; height:36px; border-radius:8px; border:1px solid var(--line);
+    background:var(--surface); color:var(--muted); font-size:12.5px; font-weight:700;
+    cursor:pointer; transition:background .12s, border-color .12s, color .12s; position:relative;
+  }
+  .day-btn:hover{ border-color:var(--o-green-50); color:var(--ink); }
+  .day-btn.on{ background:var(--daysel-bg); border-color:var(--daysel-bg); color:var(--daysel-ink); font-weight:700; }
+  /* bolinha rosa = dia em que o promotor visita a loja (colunas SEG..SÁB do roteiro) */
+  .day-btn.promo::after{
+    content:""; position:absolute; bottom:3px; left:50%; width:5px; height:5px; margin-left:-2.5px;
+    border-radius:50%; background:var(--mark);
+  }
+  .day-btn.on.promo::after{ background:var(--o-pink); }
+  .day-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .day-btn:disabled:hover{ border-color:var(--line); color:var(--muted); }
+  .day-btn.on:disabled{ opacity:.85; color:var(--daysel-ink); }
+  .multi-badge{
+    display:inline-block; font-size:11px; font-weight:700; color:var(--o-green-80); background:var(--o-green-10);
+    padding:1px 8px; border-radius:99px; margin-left:6px; vertical-align:1px; white-space:nowrap;
+  }
+  .store-row .promos{ font-size:13px; color:var(--muted); margin-top:2px; }
+  .store-row .promos .p{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .store-row .promos .p b{ color:var(--ink); font-weight:700; }
+  .store-row .promos .p .dias{ color:var(--o-pink-ink); font-weight:700; }
+  .store-row .promos .p .orig{ font-size:11px; border:1px solid var(--line); border-radius:4px; padding:0 4px; margin-left:4px; }
+  .store-row.multi{ border-left:3px solid var(--o-green-50); }
+  .legend{ font-size:12.5px; color:var(--muted); margin:0 0 14px; display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; }
+  .legend .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--mark); margin-right:5px; vertical-align:1px; }
+
+  #lockBanner:not(:empty){
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:var(--surface); border:1px solid var(--o-green-30); border-left:4px solid var(--o-green);
+    border-radius:10px; padding:10px 14px; margin-bottom:18px; color:var(--ink); font-size:14px;
+  }
+  #lockBanner.err:not(:empty){ border-color:rgba(179,38,30,.4); border-left-color:var(--danger); background:var(--danger-soft); }
+  .config-warn{
+    background:#FFF6DB; border:1px solid #E9CF7A; color:#5C4700; border-radius:10px;
+    padding:10px 14px; margin-bottom:18px; font-size:13.5px;
+  }
+
+  .empty-state{ color:var(--muted); font-size:14px; padding:30px 0; text-align:center; }
+
+  .board{ display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; align-items:start; }
+  .board-col{ background:var(--surface-2); border:1px solid var(--line-soft); border-radius:10px; padding:10px; min-height:64px; }
+  .board-col h4{
+    margin:0 0 8px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .board-col h4 .n{ background:var(--o-green); color:#fff; border-radius:99px; padding:1px 8px; font-size:11px; font-family:var(--sans); }
+  .board-col h4 .n.zero{ background:var(--o-green-10); color:var(--muted); }
+  .board-card{
+    background:var(--surface); border:1px solid var(--line-soft); border-radius:8px; padding:7px 8px;
+    margin-bottom:6px; font-size:12.5px;
+  }
+  .board-card .l{ font-weight:700; overflow-wrap:anywhere; }
+  .board-card .c{ color:var(--muted); font-size:11.5px; overflow-wrap:anywhere; }
+  .board-card.destaque{ background:var(--dest-bg); border-color:var(--dest-line); }
+  .fora-btn{ display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border-radius:10px; border:1px dashed var(--side-line); background:transparent; color:#fff; font:inherit; font-size:14px; font-weight:700; cursor:pointer; text-align:left; }
+  .fora-btn:hover{ background:rgba(247,239,230,.06); }
+  .fora-btn.active{ background:var(--o-warm); border-color:var(--o-warm); border-style:solid; color:var(--o-green); }
+  .fora-btn .fora-txt{ flex:1 1 auto; }
+  .fora-btn .fora-n{ font-size:11.5px; font-weight:700; background:rgba(247,239,230,.15); border-radius:99px; padding:1px 8px; }
+  .fora-badge{ display:inline-block; margin-left:6px; padding:0 7px; border-radius:99px; background:transparent; color:var(--o-green-80); border:1px dashed var(--o-green-50); font-size:11px; font-weight:700; vertical-align:middle; white-space:nowrap; }
+  .fora-search{ margin-bottom:12px; }
+  .fora-search .fora-info{ font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .fora-search input{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:14px; background:var(--surface-2); color:inherit; }
+  .fora-more{ text-align:center; color:var(--muted); font-size:13px; padding:10px 0; }
+  .ord-row{ display:flex; align-items:flex-start; gap:6px; }
+  .ord-n{ flex:0 0 auto; min-width:18px; height:18px; border-radius:99px; background:var(--o-green); color:#fff; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; margin-top:1px; }
+  .ord-body{ flex:1 1 auto; min-width:0; }
+  .ord-moves{ flex:0 0 auto; display:flex; flex-direction:column; gap:2px; }
+  .ord-btn{ border:1px solid var(--line-soft); background:var(--surface-2); color:var(--o-green); border-radius:4px; font-size:9px; line-height:1; padding:3px 5px; cursor:pointer; }
+  .ord-btn:hover:not([disabled]){ background:var(--o-green); color:#fff; }
+  .ord-btn[disabled]{ opacity:.3; cursor:default; }
+  .board-empty{ color:var(--muted); font-size:12px; text-align:center; padding:10px 0; }
+  .day-clear{
+    display:block; width:100%; margin-top:4px; padding:5px 0; border-radius:7px; cursor:pointer;
+    background:transparent; border:1px dashed rgba(179,38,30,.45); color:var(--danger);
+    font-size:11.5px; font-weight:700;
+  }
+  .day-clear:hover{ background:var(--danger-soft); border-style:solid; }
+
+  .group-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+    margin:22px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--line);
+    font-family:var(--display); font-size:13px; font-weight:600; letter-spacing:.02em; color:var(--ink);
+  }
+  .group-head:first-child{ margin-top:0; }
+  .group-head .count{ font-family:var(--sans); font-size:12px; color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums; }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(2,26,6,.55); display:flex; align-items:center; justify-content:center;
+    z-index:1000; padding:20px;
+  }
+  .modal-box{
+    background:var(--surface); border-radius:14px; box-shadow:var(--shadow-2);
+    padding:22px; max-width:400px; width:100%;
+  }
+  .modal-box p{ margin:0 0 18px; font-size:14.5px; color:var(--ink); line-height:1.5; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; }
+
+  @media (max-width: 1100px){
+    .board{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  }
+  @media (max-width: 860px){
+    .brandbar{ height:56px; padding:0 16px; gap:12px; }
+    .brandbar .logo-opella{ height:18px; }
+    .brandbar .logo-spot{ height:15px; padding-left:12px; }
+    .brandbar .titulo{ font-size:13px; }
+    #app.show{ flex-direction:column; padding:16px; gap:16px; align-items:stretch; }
+    #sidebar{ width:auto; max-height:none; position:static; border-radius:16px; }
+    #main{ padding:0 0 40px; }
+    /* celular: números secundários e filtros recolhidos; Gravar fixo no rodapé */
+    .more-toggle{
+      display:block; width:100%; font:inherit; font-size:13px; font-weight:700; text-align:left; cursor:pointer;
+      background:rgba(247,239,230,.07); color:var(--side-ink); border:1px solid var(--side-line); border-radius:10px; padding:9px 12px;
+    }
+    .more-toggle::after{ content:"▾"; float:right; transition:transform .15s; }
+    #sidebar.more-open .more-toggle::after{ transform:rotate(180deg); }
+    .side-more{ display:none; }
+    #sidebar.more-open .side-more{ display:flex; }
+    body.app-on{ padding-bottom:calc(92px + env(safe-area-inset-bottom)); }
+    .side-actions{
+      position:fixed; left:0; right:0; bottom:0; z-index:50; margin:0; background:var(--o-green);
+      padding:10px 16px calc(10px + env(safe-area-inset-bottom)); flex-direction:row; flex-wrap:wrap; align-items:center;
+      box-shadow:0 -8px 24px -12px rgba(2,26,6,.5);
+    }
+    .side-actions .export-hint{ order:-1; width:100%; margin:0; }
+    .side-actions #saveBtn{ flex:1 1 auto; width:auto !important; }
+    .side-actions #downloadBtn{ flex:0 0 auto; }
+    .store-row{ grid-template-columns:1fr; }
+    .days{ flex-wrap:wrap; }
+    .day-btn{ flex:1 1 0; min-width:40px; height:40px; }
+  }
+  @media (max-width: 520px){
+    .board{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .panel-body{ padding:12px; }
+    .brandbar .titulo{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="brandbar">
+  <img class="logo-opella" src="img/logo_opella.svg" alt="Opella">
+  <img class="logo-spot" src="img/logo_spot.png" alt="SPOT" onerror="this.style.display='none'">
+  <span class="titulo">Agenda do Supervisor</span>
+</header>
+
+<div id="bootScreen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;">Carregando a carteira…</div>
+
+<div id="intake" style="display:none;">
+  <div class="intake-card">
+    <div class="eyebrow">Roteiro do supervisor</div>
+    <h1>Não consegui carregar a base automaticamente</h1>
+    <p class="lede">Normalmente os dados vêm prontos junto com a página. Como fallback, envie o CSV de rotas (separado por ponto e vírgula) manualmente abaixo.</p>
+
+    <label class="drop" id="dropZone" tabindex="0">
+      <input type="file" id="fileInput" accept=".csv,text/csv" />
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <div><strong>Arraste o arquivo aqui</strong> ou clique para escolher</div>
+      <div class="hint">.csv — colunas SUPERVISOR, REGIONAL, CHAVE, LOJA, CIDADE, PROMOTOR…</div>
+    </label>
+    <div class="fileMeta" id="fileMeta">✓ <span></span></div>
+
+    <div class="or-row">ou cole o conteúdo</div>
+    <textarea id="pasteArea" placeholder="SUPERVISOR;REGIONAL;CHAVE;COD PDV;LOJA;ENDERECO;CIDADE;PROMOTOR;INCO"></textarea>
+
+    <div id="intakeError"></div>
+    <div id="intakeActions">
+      <button class="btn primary" id="loadBtn" disabled>Montar agenda →</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <aside id="sidebar">
+    <div class="side-title"><b>Agenda da semana</b><span id="weekSideLabel"></span></div>
+    <div class="side-sep"></div>
+
+    <div>
+      <label for="supSelect" class="eyebrow">Supervisor</label><br/>
+      <select id="supSelect"></select>
+    </div>
+
+    <button class="fora-btn" id="foraBtn" type="button" style="display:none;">
+      <span class="fora-ico">📍</span><span class="fora-txt" id="foraBtnTxt">Lojas fora do roteiro</span><span class="fora-n" id="foraBtnN"></span>
+    </button>
+
+    <div class="stat-block">
+      <div class="stat-row"><span>PDVs na carteira</span><span class="n" id="statTotal">0</span></div>
+      <div class="stat-row"><span>Agendados</span><span class="n" id="statDone">0</span></div>
+      <div class="bar-row"><div class="bar"><i id="statBar" style="width:0%"></i></div><span class="bar-pct" id="statPct">0%</span></div>
+      <div class="stat-row" id="statForaRow" style="margin-top:4px;display:none;"><span>📍 Fora do roteiro agendadas</span><span class="n" id="statFora">0</span></div>
+    </div>
+
+    <!-- no celular, este bloco fica recolhido para as lojas aparecerem logo -->
+    <button type="button" class="more-toggle" id="moreToggle" aria-expanded="false" aria-controls="sideMore">Mais números e filtros</button>
+    <div class="side-more" id="sideMore">
+
+    <div class="stat-block" id="destaqueBlock">
+      <div class="stat-row"><span><span class="destaque-star">★</span><span class="destaque-nome">Golden Store</span> na carteira</span><span class="n" id="statDestaqueTotal">0</span></div>
+      <div class="stat-row"><span>Agendados</span><span class="n" id="statDestaqueDone">0</span></div>
+      <div class="bar-row"><div class="bar"><i id="statDestaqueBar" style="width:0%"></i></div><span class="bar-pct" id="statDestaquePct">0%</span></div>
+    </div>
+
+    <div class="stat-block">
+      <div class="stat-row"><span>Promotores na carteira</span><span class="n" id="statPromoTotal">0</span></div>
+      <div class="stat-row"><span>Cobertos</span><span class="n" id="statPromoDone">0</span></div>
+      <div class="bar-row"><div class="bar"><i id="statPromoBar" style="width:0%"></i></div><span class="bar-pct" id="statPromoPct">0%</span></div>
+      <div class="stat-row" style="margin-top:4px;"><span>👥 Lojas com 2+ promotores</span><span class="n" id="statMulti">0</span></div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:4px;">Por dia</div>
+      <div class="day-mini" id="dayMini"></div>
+    </div>
+
+    <div class="side-sep"></div>
+
+    <div class="filters">
+      <div class="filters-head">
+        <span class="eyebrow">Filtros</span>
+        <button type="button" class="filters-clear" id="filtersClear" style="display:none;">Limpar filtros</button>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:4px;">Regional</div>
+        <div class="cdd-filters" id="cddFilters"></div>
+      </div>
+      <div>
+        <label for="bandeiraFilterSel" class="eyebrow">Bandeira</label>
+        <select class="filter-select" id="bandeiraFilterSel"></select>
+      </div>
+      <div>
+        <label for="cidadeFilterSel" class="eyebrow">Cidade</label>
+        <select class="filter-select" id="cidadeFilterSel"></select>
+      </div>
+      <div>
+        <label for="bairroFilterSel" class="eyebrow">Bairro</label>
+        <select class="filter-select" id="bairroFilterSel"></select>
+      </div>
+      <div>
+        <label for="promotorFilterSel" class="eyebrow">Promotor</label>
+        <select class="filter-select" id="promotorFilterSel"></select>
+      </div>
+    </div>
+
+    </div><!-- /side-more -->
+
+    <div class="side-actions">
+      <button class="btn primary" id="saveBtn" disabled style="width:100%;justify-content:center;">Gravar agenda</button>
+      <div class="export-hint" id="saveHint">Marque pelo menos um dia para gravar</div>
+      <button class="btn small ghost" id="downloadBtn" disabled title="Baixa uma cópia em Excel da agenda atual">Exportar Excel</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow" id="supEyebrow">Supervisor</div>
+        <h1 id="supName">—</h1>
+        <div class="sub">Toque nos dias da semana de cada loja para marcar as visitas (uma loja pode ter mais de um dia). Toque de novo para desmarcar.</div>
+        <div class="prazo" id="prazoTxt"></div>
+      </div>
+      <button class="btn small danger" id="clearBtn">Limpar rota</button>
+    </div>
+
+    <div id="configWarn"></div>
+    <div id="lockBanner"></div>
+
+    <section class="panel">
+      <span class="tag">Resumo da semana</span>
+      <div class="panel-body"><div id="weekSummary"></div></div>
+    </section>
+
+    <section class="panel">
+      <span class="tag" id="pdvPanelTag">PDVs da carteira</span>
+      <div class="panel-body">
+        <div class="fora-search" id="foraSearchBox" style="display:none;">
+          <div class="fora-info">Lojas da base total <b>sem promotor</b>, nas cidades onde este supervisor já atua. Marque os dias para incluir na agenda.</div>
+          <input type="search" id="foraSearch" placeholder="Buscar por nome, endereço, bairro ou código da loja…" autocomplete="off"/>
+        </div>
+        <div class="legend" id="pdvLegend">
+          <span><span class="dot"></span>bolinha no botão = dia em que o promotor visita a loja</span>
+          <span><span class="multi-badge" style="margin-left:0;">👥 2 promotores</span> loja atendida por mais de um promotor</span>
+          <span id="legendDestaque"><span class="destaque-star">★</span><span class="destaque-nome">Golden Store</span></span>
+        </div>
+        <div id="pdvList"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<iframe name="syncFrame" id="syncFrame" style="display:none;" title="sync"></iframe>
+
+<div id="modalOverlay" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <p id="modalMessage"></p>
+    <div class="modal-actions">
+      <button class="btn small ghost" id="modalCancel">Cancelar</button>
+      <button class="btn small danger-solid" id="modalConfirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script src="agenda_dados.js"></script>
+<script>
+(function(){
+  "use strict";
+  var DAYS = [
+    {code:"SEG", label:"Seg", idx:0},
+    {code:"TER", label:"Ter", idx:1},
+    {code:"QUA", label:"Qua", idx:2},
+    {code:"QUI", label:"Qui", idx:3},
+    {code:"SEX", label:"Sex", idx:4},
+    {code:"SAB", label:"Sáb", idx:5}
+  ];
+  /* ======== CONFIGURAÇÃO DO CLIENTE (o que muda de um cliente para outro) ======== */
+  // Prazo exibido ao supervisor (só texto, sem trava). Deixe "" para esconder.
+  var PRAZO_TXT = "Prazo para gravar: até DIA-DA-SEMANA, dd/mm";
+  // Nome do conceito de loja destaque (INCO contém "GOLDEN" ou coluna DESTAQUE = SIM).
+  // Se a carteira não tiver nenhuma loja destaque, o bloco some sozinho.
+  var DESTAQUE_NOME = "Golden Store";
+  // Prefixo do localStorage: único por cliente (evita misturar agendas no mesmo domínio).
+  var LS = "agopella_";
+  /* ============================================================================== */
+  var STORE_KEY = LS + "visitas_v1";
+  var SAVED_KEY = LS + "gravada_v1";
+  var DATA_KEY = LS + "dados_v1";
+  var WEEK_KEY = LS + "semana_local_v1";
+  var ORDER_KEY = LS + "ordem_v1";
+  var DATA_URL = "agenda_dados.csv";
+  var WEEK_URL = "agenda_semana.txt";
+  var FORA_URL = "lojas_fora.csv"; // lojas da base total sem promotor, nas cidades de cada supervisor - gerado pelo .bat
+  var PERIOD_URL = "agenda_periodo.txt"; // data de início (domingo) da semana da agenda, yyyy-mm-dd - gravado pelo .bat
+  var SYNC_URL = "https://script.google.com/macros/s/AKfycbzSRL62avTKZ8NWp2cagqMlr_9yXoOLkTAexLBEGqsPW19fgltCDqIE9bhq4EJUXxEI/exec"; // termina em /exec
+  var DETAIL_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7L_hSsYQYqCAf7xREakLd5UCpLVqzv5MJPo8I1jL0WrA9vuCgWKIBY7iWe9CY418FrrisHhaaVW8A/pub?gid=979993841&single=true&output=csv";
+  var STATUS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7L_hSsYQYqCAf7xREakLd5UCpLVqzv5MJPo8I1jL0WrA9vuCgWKIBY7iWe9CY418FrrisHhaaVW8A/pub?gid=741357542&single=true&output=csv";
+  // true quando as 3 URLs da planilha já foram coladas (sem isso não há envio nem sincronização)
+  function sheetConfigured(){
+    return [SYNC_URL, DETAIL_CSV_URL, STATUS_CSV_URL].every(function(u){ return u && u.indexOf("COLE_AQUI") !== 0; });
+  }
+
+  var rows = [];
+  var WEEK_ID = ""; // semana publicada (vem de agenda_semana.txt); "" se ainda nao existir esse arquivo
+  var PERIODO_INICIO = ""; // yyyy-mm-dd (domingo) vindo de agenda_periodo.txt; "" se não houver
+  var assignments = {}; // { [supervisor]: { [chave]: [dayCode, ...] } }
+  var orders = {}; // { [supervisor]: { [dayCode]: [chave, ...] } } - ordem das visitas em cada dia
+  var foraBySup = {}; // { [supervisor]: [loja, ...] } - lojas fora do roteiro (sem promotor)
+  var viewFora = false; // lista central mostrando as lojas fora do roteiro em vez da carteira
+  var foraSearch = "";
+  var FORA_MAX = 200; // máximo de lojas fora do roteiro desenhadas de uma vez (o resto via busca/filtros)
+  var savedState = {}; // { [supervisor]: { savedAt: 1234567890, snapshot: "{...}" } }
+  var currentSup = null;
+  var cddFilter = "TODOS";
+  // Filtros da barra lateral em cascata: Regional (chips) -> Bandeira -> Cidade -> Bairro -> Promotor.
+  // "" = todos. Cada lista só mostra opções compatíveis com os filtros ACIMA dela.
+  var FILTER_CHAIN = [
+    { key:"bandeira", sel:"bandeiraFilterSel", all:"Todas", get:function(s){ return [s.bandeira]; } },
+    { key:"cidade",   sel:"cidadeFilterSel",   all:"Todas", get:function(s){ return [s.cidade]; } },
+    { key:"bairro",   sel:"bairroFilterSel",   all:"Todos", get:function(s){ return [s.bairro]; } },
+    { key:"promotor", sel:"promotorFilterSel", all:"Todos", get:function(s){ return s.promotores; } }
+  ];
+  var filters = { bandeira:"", cidade:"", bairro:"", promotor:"" };
+  function resetFilters(fromIdx){
+    FILTER_CHAIN.forEach(function(f, i){ if (i >= (fromIdx||0)) filters[f.key] = ""; });
+  }
+
+  function norm(s){ return (s||"").toString().trim(); }
+
+  function findCol(header, names){
+    for (var i=0;i<header.length;i++){
+      var h = header[i].toUpperCase().replace(/﻿/g,"").trim();
+      for (var j=0;j<names.length;j++){ if (h === names[j]) return i; }
+    }
+    return -1;
+  }
+
+  function parseCSV(text){
+    var lines = text.replace(/﻿/g,"").split(/\r?\n/).filter(function(l){ return l.trim().length; });
+    if (!lines.length) return [];
+    var header = lines[0].split(";");
+    var iPromotor = findCol(header, ["PROMOTOR"]);
+    var iSupervisor = findCol(header, ["SUPERVISOR"]);
+    var iCDD = findCol(header, ["REGIONAL","CDD"]);
+    var iCodPdv = findCol(header, ["COD PDV","CODPDV"]);
+    var iChave = findCol(header, ["CHAVE"]);
+    var iLoja = findCol(header, ["LOJA"]);
+    var iEndereco = findCol(header, ["ENDEREÇO","ENDERECO"]);
+    if (iEndereco === -1){
+      // fallback tolerante a problema de codificação do "Ç" (compara só o prefixo sem acento)
+      for (var k=0;k<header.length;k++){
+        if (header[k].toUpperCase().replace(/﻿/g,"").trim().indexOf("ENDERE") === 0){ iEndereco = k; break; }
+      }
+    }
+    var iCidade = findCol(header, ["CIDADE"]);
+    var iBandeira = findCol(header, ["BANDEIRA"]);
+    var iBairro = findCol(header, ["BAIRRO"]);
+    var iRota = findCol(header, ["ROTA"]);
+    var iDestaque = findCol(header, ["DESTAQUE"]);
+    var iInco = findCol(header, ["INCO"]);
+    var iDiasProm = findCol(header, ["DIAS_PROMOTOR"]);
+    var iOrigem = findCol(header, ["ORIGEM"]);
+    var labelToCode = {};
+    DAYS.forEach(function(d){ labelToCode[d.label.toUpperCase()] = d.code; labelToCode[d.code] = d.code; });
+    labelToCode["SAB"] = "SAB";
+
+    if (iSupervisor === -1 || iLoja === -1){ return null; }
+
+    var out = [];
+    for (var l=1; l<lines.length; l++){
+      var cols = lines[l].split(";");
+      var chave = iChave>-1 ? norm(cols[iChave]) : (norm(cols[iCodPdv])+"_"+l);
+      var sup = norm(cols[iSupervisor]);
+      var loja = norm(cols[iLoja]);
+      if (!sup || !loja) continue;
+      out.push({
+        promotor: iPromotor>-1 ? norm(cols[iPromotor]) : "",
+        supervisor: sup,
+        cdd: (iCDD>-1 ? norm(cols[iCDD]) : "") || "SEM REGIONAL",
+        codPdv: iCodPdv>-1 ? norm(cols[iCodPdv]) : "",
+        chave: chave || (loja+"_"+l),
+        loja: loja,
+        endereco: iEndereco>-1 ? norm(cols[iEndereco]) : "",
+        cidade: iCidade>-1 ? norm(cols[iCidade]) : "",
+        bandeira: (iBandeira>-1 ? norm(cols[iBandeira]) : "") || "SEM BANDEIRA",
+        bairro: (iBairro>-1 ? norm(cols[iBairro]) : "") || "SEM BAIRRO",
+        rota: iRota>-1 ? norm(cols[iRota]) : "",
+        origem: iOrigem>-1 ? norm(cols[iOrigem]) : "",
+        promoDays: (iDiasProm>-1 ? norm(cols[iDiasProm]) : "").split(/[\s,]+/).map(function(x){ return labelToCode[x.toUpperCase()]; }).filter(Boolean),
+        destaque: (iDestaque>-1 && norm(cols[iDestaque]).toUpperCase() === "SIM") ||
+                  (iInco>-1 && norm(cols[iInco]).toUpperCase().indexOf("GOLDEN") > -1)
+      });
+    }
+    return out;
+  }
+
+  function parseForaCSV(text){
+    var out = {};
+    var lines = (text||"").replace(/﻿/g,"").split(/\r?\n/).filter(function(l){ return l.trim().length; });
+    if (lines.length < 2) return out;
+    var h = lines[0].split(";");
+    var I = {};
+    ["SUPERVISOR","CHAVE","BANDEIRA","LOJA","ENDERECO","BAIRRO","CIDADE","UF","REGIONAL"].forEach(function(n){ I[n] = findCol(h, [n]); });
+    if (I.SUPERVISOR === -1 || I.CHAVE === -1) return out;
+    for (var l=1; l<lines.length; l++){
+      var c = lines[l].split(";");
+      function g(n){ return I[n] > -1 ? norm(c[I[n]]) : ""; }
+      var sup = g("SUPERVISOR"), chave = g("CHAVE");
+      if (!sup || !chave) continue;
+      if (!out[sup]) out[sup] = [];
+      out[sup].push({
+        chave: chave, cdd: g("REGIONAL") || "SEM REGIONAL", codPdv: chave,
+        loja: g("LOJA") || ("LOJA " + chave), endereco: g("ENDERECO"), cidade: g("CIDADE"),
+        bandeira: g("BANDEIRA") || "SEM BANDEIRA", bairro: g("BAIRRO") || "SEM BAIRRO", rota: "",
+        destaque: false, promotores: [], promoDet: [], promoDays: [], fora: true,
+        busca: (g("LOJA")+" "+g("ENDERECO")+" "+g("BAIRRO")+" "+g("BANDEIRA")+" "+chave).toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+      });
+    }
+    Object.keys(out).forEach(function(s){
+      out[s].sort(function(a,b){ return a.cidade.localeCompare(b.cidade) || a.loja.localeCompare(b.loja); });
+    });
+    return out;
+  }
+  function foraStoresForSupervisor(sup){
+    // não repete loja que já está na carteira dele (segurança caso as bases mudem em datas diferentes)
+    var naCarteira = {};
+    storesForSupervisor(sup).forEach(function(s){ naCarteira[s.chave] = 1; });
+    return (foraBySup[sup] || []).filter(function(s){ return !naCarteira[s.chave]; });
+  }
+  // carteira + fora do roteiro: tudo que pode entrar na agenda
+  function allStoresForSupervisor(sup){
+    return storesForSupervisor(sup).concat(foraStoresForSupervisor(sup));
+  }
+  function foraAgendadas(sup){
+    return foraStoresForSupervisor(sup).filter(function(s){ return getDays(sup, s.chave).length > 0; });
+  }
+
+  function loadAssignments(){
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch(e){ return {}; }
+  }
+  function saveAssignments(){
+    localStorage.setItem(STORE_KEY, JSON.stringify(assignments));
+    try { localStorage.setItem(ORDER_KEY, JSON.stringify(orders)); } catch(e){}
+  }
+  function loadOrders(){
+    try { return JSON.parse(localStorage.getItem(ORDER_KEY) || "{}"); } catch(e){ return {}; }
+  }
+
+  // Lojas marcadas no dia, na ordem da visita. A lista guardada é a fonte da ordem; lojas
+  // marcadas que ainda não estão nela (ex.: estado antigo) entram no fim, e as desmarcadas saem.
+  function dayOrder(sup, code){
+    var a = assignments[sup] || {};
+    var saved = (orders[sup] && orders[sup][code]) || [];
+    var out = saved.filter(function(c){ return a[c] && a[c].indexOf(code) > -1; });
+    Object.keys(a).forEach(function(c){
+      if (a[c].indexOf(code) > -1 && out.indexOf(c) === -1) out.push(c);
+    });
+    return out;
+  }
+  function setDayOrder(sup, code, list){
+    if (!orders[sup]) orders[sup] = {};
+    orders[sup][code] = list;
+  }
+  function visitNumber(sup, code, chave){
+    return dayOrder(sup, code).indexOf(chave) + 1;
+  }
+  function moveInDay(sup, code, chave, delta){
+    var list = dayOrder(sup, code);
+    var i = list.indexOf(chave), j = i + delta;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    setDayOrder(sup, code, list);
+    saveAssignments();
+    renderAll();
+  }
+
+  function loadSavedState(){
+    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || "{}"); } catch(e){ return {}; }
+  }
+  function persistSavedState(){
+    localStorage.setItem(SAVED_KEY, JSON.stringify(savedState));
+  }
+  function currentSnapshot(sup){
+    // inclui a ordem: reordenar também conta como alteração não gravada
+    var o = {};
+    DAYS.forEach(function(d){ var l = dayOrder(sup, d.code); if (l.length) o[d.code] = l; });
+    return JSON.stringify(assignments[sup] || {}) + "|" + JSON.stringify(o);
+  }
+  function hasUnsavedChanges(sup){
+    var saved = savedState[sup];
+    if (!saved) return Object.keys(assignments[sup] || {}).length > 0;
+    return saved.snapshot !== currentSnapshot(sup);
+  }
+  function isLocked(sup){
+    return !!(savedState[sup] && savedState[sup].locked);
+  }
+
+  function buildSyncPayload(sup){
+    var stores = storesForSupervisor(sup);
+    var entries = [];
+    allStoresForSupervisor(sup).forEach(function(s){
+      getDays(sup, s.chave).forEach(function(d){
+        var dayLabel = DAYS.filter(function(x){ return x.code===d; })[0].label;
+        entries.push({ chave: s.chave, dia: dayLabel, ordem: visitNumber(sup, d, s.chave), regional: s.cdd, loja: s.loja, cidade: s.cidade, endereco: s.endereco, promotores: s.promotores.join(" | "), fora: s.fora ? "SIM" : "" });
+      });
+    });
+    var done = stores.filter(function(s){ return getDays(sup, s.chave).length > 0; }).length;
+    var semana = WEEK_ID;
+    if (!semana){
+      // fallback enquanto agenda_semana.txt ainda nao existe no repo (antes do .bat atualizado rodar)
+      var d = new Date();
+      function pad(n){ return n<10 ? "0"+n : ""+n; }
+      semana = d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+    }
+    return { supervisor: sup, semana: semana, inicio: PERIODO_INICIO, totalPdvs: stores.length, totalAgendados: done, entries: entries };
+  }
+
+  function syncToSheet(sup){
+    // fetch(no-cors) perde o body do POST no redirecionamento interno do Apps Script.
+    // Envio via formulário oculto + iframe evita esse problema (é navegação real, não fetch).
+    // Como isso impede ler a resposta do servidor, o "sucesso" do form por si só nao prova
+    // nada — por isso confirmamos de verdade lendo a planilha publicada depois (verifySync).
+    if (!sheetConfigured()) return Promise.reject(new Error("planilha nao configurada"));
+    var payload = buildSyncPayload(sup);
+    var sentAt = Date.now();
+    return new Promise(function(resolve){
+      var iframe = document.getElementById("syncFrame");
+      var form = document.createElement("form");
+      form.method = "POST";
+      form.action = SYNC_URL;
+      form.target = "syncFrame";
+      form.style.display = "none";
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "payload";
+      input.value = JSON.stringify(payload);
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+      setTimeout(function(){ resolve(true); }, 900);
+    }).then(function(){
+      return verifySync(sup, payload, 0, sentAt);
+    });
+  }
+
+  // Relê o Status publicado até achar uma gravação deste supervisor feita DEPOIS do envio.
+  // Compara com a hora do envio (folga de 60 s para relógio do aparelho adiantado, a mesma
+  // tolerância de antes), e não com "agora": as tentativas levam tempo e o CSV publicado
+  // demora a refletir, então a janela antiga "últimos 60 s" vencia no meio das tentativas.
+  var VERIFY_WAITS = [1500, 2500, 4000, 6000, 8000, 10000]; // ~32 s no total
+  function verifySync(sup, payload, attempt, sentAt){
+    return fetch(csvUrlWithCacheBust(STATUS_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); }).then(function(text){
+      var rows = parseCsvGeneric(text);
+      if (!rows.length) throw new Error("planilha sem dados");
+      var header = rows[0];
+      var idx = {};
+      header.forEach(function(h,i){ idx[h.trim().toUpperCase()] = i; });
+      for (var i=1; i<rows.length; i++){
+        if ((rows[i][idx["SUPERVISOR"]]||"") !== sup) continue;
+        if ((rows[i][idx["SEMANA"]]||"") !== payload.semana) continue;
+        var gravadoRaw = idx["GRAVADO_EM"]>-1 ? rows[i][idx["GRAVADO_EM"]] : "";
+        var t = gravadoRaw ? new Date(gravadoRaw).getTime() : NaN;
+        if (!isNaN(t) && t >= sentAt - 60000) return true; // gravado depois do envio = chegou
+      }
+      throw new Error("ainda nao confirmado");
+    }).catch(function(){
+      if (attempt >= VERIFY_WAITS.length) throw new Error("nao foi possivel confirmar o envio pra planilha");
+      return new Promise(function(res){ setTimeout(res, VERIFY_WAITS[attempt]); }).then(function(){
+        return verifySync(sup, payload, attempt + 1, sentAt);
+      });
+    });
+  }
+  function parseCsvGeneric(text){
+    var rows = [];
+    var i=0, field="", row=[], inQuotes=false;
+    text = (text||"").replace(/\r\n/g,"\n").replace(/^﻿/,"");
+    while (i < text.length){
+      var c = text[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (text[i+1] === '"'){ field += '"'; i+=2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += c; i++; continue;
+      } else {
+        if (c === '"'){ inQuotes = true; i++; continue; }
+        if (c === ','){ row.push(field); field=""; i++; continue; }
+        if (c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; i++; continue; }
+        field += c; i++; continue;
+      }
+    }
+    if (field.length || row.length){ row.push(field); rows.push(row); }
+    return rows.filter(function(r){ return r.length>1 || (r[0]||"").trim().length; });
+  }
+
+  // Lê um arquivo da pasta do site. Aberto com duplo clique (file://) o navegador bloqueia o fetch;
+  // nesse caso usa a cópia de agenda_dados.js (gerada pelo ATUALIZAR_AGENDA.bat).
+  function localGet(url){
+    return fetch(csvUrlWithCacheBust(url), {cache:"no-store"}).catch(function(err){
+      var emb = window.AGENDA_ARQUIVOS && window.AGENDA_ARQUIVOS[url];
+      if (emb == null) throw err;
+      return new Response(emb, { status: 200 });
+    });
+  }
+  function csvUrlWithCacheBust(url){
+    return url + (url.indexOf("?")>-1 ? "&" : "?") + "_=" + Date.now();
+  }
+
+  function fetchRemoteState(sup){
+    if (!sheetConfigured()) return Promise.resolve(false);
+    return Promise.all([
+      fetch(csvUrlWithCacheBust(DETAIL_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); }),
+      fetch(csvUrlWithCacheBust(STATUS_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); })
+    ]).then(function(results){
+      var detailRows = parseCsvGeneric(results[0]);
+      var statusRows = parseCsvGeneric(results[1]);
+      if (!detailRows.length || !statusRows.length) return false;
+
+      var dHeader = detailRows[0];
+      var idx = {};
+      dHeader.forEach(function(h,i){ idx[h.trim().toUpperCase()] = i; });
+      var labelToCode = {};
+      DAYS.forEach(function(d){ labelToCode[d.label] = d.code; });
+
+      var dSemanaIdx = idx["SEMANA"];
+
+      var remoteAssign = {};
+      var remoteSeq = {}; // { dayCode: [{chave, ordem}] } - para recuperar a ordem das visitas
+      for (var r=1; r<detailRows.length; r++){
+        var row = detailRows[r];
+        if ((row[idx["SUPERVISOR"]]||"") !== sup) continue;
+        if (WEEK_ID && dSemanaIdx>-1 && (row[dSemanaIdx]||"") !== WEEK_ID) continue;
+        var chave = row[idx["CHAVE"]] || "";
+        var dayCode = labelToCode[row[idx["DIA"]]];
+        if (!chave || !dayCode) continue;
+        if (!remoteAssign[chave]) remoteAssign[chave] = [];
+        if (remoteAssign[chave].indexOf(dayCode) === -1) remoteAssign[chave].push(dayCode);
+        var ord = idx["ORDEM"] > -1 ? parseInt(row[idx["ORDEM"]], 10) : NaN;
+        if (!remoteSeq[dayCode]) remoteSeq[dayCode] = [];
+        remoteSeq[dayCode].push({ chave: chave, ordem: isNaN(ord) ? 9999 : ord, pos: r });
+      }
+      var remoteOrders = {};
+      Object.keys(remoteSeq).forEach(function(code){
+        remoteOrders[code] = remoteSeq[code].sort(function(a,b){ return (a.ordem - b.ordem) || (a.pos - b.pos); })
+          .map(function(x){ return x.chave; });
+      });
+
+      var sHeader = statusRows[0];
+      var sIdx = {};
+      sHeader.forEach(function(h,i){ sIdx[h.trim().toUpperCase()] = i; });
+      var savedAtMs = null;
+      var lockedRaw = "";
+      for (var s=1; s<statusRows.length; s++){
+        if ((statusRows[s][sIdx["SUPERVISOR"]]||"") !== sup) continue;
+        if (WEEK_ID && sIdx["SEMANA"]>-1 && (statusRows[s][sIdx["SEMANA"]]||"") !== WEEK_ID) continue;
+        var iso = statusRows[s][sIdx["GRAVADO_EM"]];
+        var parsed = iso ? new Date(iso).getTime() : NaN;
+        savedAtMs = isNaN(parsed) ? Date.now() : parsed;
+        lockedRaw = sIdx["LOCKED"]>-1 ? (statusRows[s][sIdx["LOCKED"]]||"") : "";
+        break;
+      }
+
+      if (savedAtMs === null) return false; // sem registro da planilha pra semana atual - nao mexe no estado local
+
+      // se a planilha nao tiver a coluna LOCKED ainda (antes da migracao), volta pro criterio antigo
+      var locked = sIdx["LOCKED"]>-1 ? (lockedRaw.trim().toUpperCase() === "SIM") : (Object.keys(remoteAssign).length > 0);
+      assignments[sup] = remoteAssign; // preserva o que estiver gravado, mesmo se liberado pra edicao
+      orders[sup] = remoteOrders;
+      savedState[sup] = { savedAt: savedAtMs, snapshot: currentSnapshot(sup), locked: locked, syncStatus: "ok" };
+      saveAssignments();
+      persistSavedState();
+      return true;
+    }).catch(function(){ return false; });
+  }
+
+  function syncFromRemoteAndRender(sup){
+    if (!sheetConfigured()) return;
+    document.getElementById("supEyebrow").textContent = "Sincronizando com a planilha…";
+    fetchRemoteState(sup).then(function(changed){
+      if (currentSup === sup) renderAll();
+    });
+  }
+
+  function formatSavedAt(ms){
+    var d = new Date(ms);
+    function pad(n){ return n<10 ? "0"+n : ""+n; }
+    return pad(d.getDate())+"/"+pad(d.getMonth()+1)+" às "+pad(d.getHours())+":"+pad(d.getMinutes());
+  }
+
+  function storesForSupervisor(sup){
+    var map = new Map();
+    for (var i=0;i<rows.length;i++){
+      var r = rows[i];
+      if (r.supervisor !== sup) continue;
+      if (!map.has(r.chave)){
+        map.set(r.chave, {chave:r.chave, cdd:r.cdd, codPdv:r.codPdv, loja:r.loja, endereco:r.endereco, cidade:r.cidade, bandeira:r.bandeira, bairro:r.bairro, rota:r.rota, destaque:r.destaque, promotores:[], promoDet:[], promoDays:[]});
+      }
+      var st = map.get(r.chave);
+      if (r.destaque) st.destaque = true;
+      if (r.promotor && st.promotores.indexOf(r.promotor) === -1){
+        st.promotores.push(r.promotor);
+        st.promoDet.push({ nome: r.promotor, dias: r.promoDays, origem: r.origem });
+      }
+      r.promoDays.forEach(function(d){ if (st.promoDays.indexOf(d) === -1) st.promoDays.push(d); });
+    }
+    return Array.from(map.values()).sort(function(a,b){
+      if (a.cdd !== b.cdd) return a.cdd.localeCompare(b.cdd);
+      if (a.cidade !== b.cidade) return a.cidade.localeCompare(b.cidade);
+      return a.loja.localeCompare(b.loja);
+    });
+  }
+
+  function uniqueSupervisors(){
+    var s = new Set();
+    rows.forEach(function(r){ s.add(r.supervisor); });
+    return Array.from(s).sort();
+  }
+
+  function cddsForSupervisor(sup){
+    var s = new Set();
+    rows.forEach(function(r){ if (r.supervisor === sup) s.add(r.cdd); });
+    return Array.from(s).sort();
+  }
+
+  // loja passa pelo filtro de regional e pelos n primeiros filtros da cascata
+  function matchUpTo(s, n){
+    if (cddFilter !== "TODOS" && s.cdd !== cddFilter) return false;
+    for (var i=0; i<n; i++){
+      var f = FILTER_CHAIN[i], v = filters[f.key];
+      if (v && f.get(s).indexOf(v) === -1) return false;
+    }
+    return true;
+  }
+
+  function applyFilters(stores){
+    return stores.filter(function(s){ return matchUpTo(s, FILTER_CHAIN.length); });
+  }
+
+  function renderFilterSelects(stores){
+    FILTER_CHAIN.forEach(function(f, i){
+      var base = stores.filter(function(s){ return matchUpTo(s, i); });
+      var counts = {};
+      base.forEach(function(s){ f.get(s).forEach(function(v){ if (v) counts[v] = (counts[v]||0) + 1; }); });
+      var values = Object.keys(counts).sort(function(a,b){ return a.localeCompare(b); });
+      if (filters[f.key] && !counts[filters[f.key]]) filters[f.key] = "";
+      var sel = document.getElementById(f.sel);
+      sel.innerHTML = '<option value="">'+f.all+' ('+base.length+')</option>' +
+        values.map(function(v){ return '<option value="'+escapeAttr(v)+'">'+escapeHtml(v)+' ('+counts[v]+')</option>'; }).join("");
+      sel.value = filters[f.key];
+      sel.onchange = function(){
+        filters[f.key] = sel.value;
+        resetFilters(i + 1);
+        renderAll();
+      };
+    });
+  }
+
+  function getDays(sup, chave){
+    return (assignments[sup] && assignments[sup][chave]) || [];
+  }
+  function toggleDay(sup, chave, code){
+    if (!assignments[sup]) assignments[sup] = {};
+    var days = assignments[sup][chave] || [];
+    var idx = days.indexOf(code);
+    var list = dayOrder(sup, code);
+    if (idx > -1) {
+      days = days.slice(0,idx).concat(days.slice(idx+1));
+      setDayOrder(sup, code, list.filter(function(c){ return c !== chave; }));
+    } else {
+      days = days.concat([code]);
+      setDayOrder(sup, code, list.concat([chave])); // loja nova entra no fim da fila do dia
+    }
+    if (days.length) assignments[sup][chave] = days;
+    else delete assignments[sup][chave];
+    saveAssignments();
+    renderAll();
+  }
+
+  function clearPdv(sup, chave){
+    if (!assignments[sup]) return;
+    delete assignments[sup][chave];
+    saveAssignments();
+    renderAll();
+  }
+
+  // Tira um dia da semana das lojas indicadas (só as que aparecem no card, respeitando os filtros).
+  // Mexe só na tela; o supervisor grava depois pelo botão "Gravar agenda".
+  function clearDay(sup, code, chaves){
+    if (!assignments[sup]) return;
+    chaves.forEach(function(chave){
+      var days = assignments[sup][chave];
+      if (!days) return;
+      days = days.filter(function(d){ return d !== code; });
+      if (days.length) assignments[sup][chave] = days;
+      else delete assignments[sup][chave];
+    });
+    saveAssignments();
+    renderAll();
+  }
+
+  // Modal próprio (o confirm() do navegador é bloqueado em alguns ambientes).
+  // Sem onConfirm, vira um aviso simples com um botão "Entendi".
+  function showConfirm(message, onConfirm, okLabel){
+    var overlay = document.getElementById("modalOverlay");
+    document.getElementById("modalMessage").textContent = message;
+    var confirmBtn = document.getElementById("modalConfirm");
+    var cancelBtn = document.getElementById("modalCancel");
+    var info = typeof onConfirm !== "function";
+    confirmBtn.textContent = okLabel || (info ? "Entendi" : "Confirmar");
+    confirmBtn.className = "btn small " + (info ? "primary" : "danger-solid");
+    cancelBtn.style.display = info ? "none" : "";
+    overlay.style.display = "flex";
+    confirmBtn.focus();
+    function cleanup(){
+      overlay.style.display = "none";
+      confirmBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      document.removeEventListener("keydown", onKey);
+    }
+    function onOk(){ cleanup(); if (!info) onConfirm(); }
+    function onCancel(){ cleanup(); }
+    function onKey(e){ if (e.key === "Escape") onCancel(); }
+    confirmBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    document.addEventListener("keydown", onKey);
+  }
+  var NAO_CONFIG_MSG = "O envio para o gestor ainda não está ativo: faltam as URLs da planilha (procure COLE_AQUI no código). As marcações ficam salvas só neste aparelho.";
+
+  /* ---------------- rendering ---------------- */
+  function renderSupSelect(){
+    var sel = document.getElementById("supSelect");
+    var sups = uniqueSupervisors();
+    sel.innerHTML = sups.map(function(s){ return '<option value="'+escapeAttr(s)+'">'+escapeHtml(s)+'</option>'; }).join("");
+    if (!currentSup || sups.indexOf(currentSup) === -1) currentSup = sups[0] || null;
+    sel.value = currentSup || "";
+  }
+
+  function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  function renderSidebar(){
+    if (!currentSup) return;
+    var stores = storesForSupervisor(currentSup);
+    var fora = foraStoresForSupervisor(currentSup);
+    var total = stores.length;
+    var done = stores.filter(function(s){ return getDays(currentSup, s.chave).length > 0; }).length;
+    var foraDone = foraAgendadas(currentSup).length;
+    var viewStores = viewFora ? fora : stores; // base da lista central (e dos filtros)
+
+    var foraBtn = document.getElementById("foraBtn");
+    foraBtn.style.display = (fora.length || foraDone) ? "flex" : "none";
+    foraBtn.classList.toggle("active", viewFora);
+    document.getElementById("foraBtnTxt").textContent = viewFora ? "← Voltar para a carteira" : "Lojas fora do roteiro";
+    document.getElementById("foraBtnN").textContent = viewFora ? "" : fora.length;
+    document.getElementById("statForaRow").style.display = (fora.length || foraDone) ? "flex" : "none";
+    document.getElementById("statFora").textContent = foraDone;
+
+    document.getElementById("statTotal").textContent = total;
+    document.getElementById("statDone").textContent = done;
+    var pdvPct = total ? Math.round(done/total*100) : 0;
+    document.getElementById("statBar").style.width = pdvPct + "%";
+    document.getElementById("statPct").textContent = pdvPct + "%";
+
+    var promoterSet = new Set();
+    stores.forEach(function(s){ s.promotores.forEach(function(p){ if (p) promoterSet.add(p); }); });
+    var promoTotal = promoterSet.size;
+    var promoDone = 0;
+    promoterSet.forEach(function(p){
+      var covered = stores.some(function(s){ return s.promotores.indexOf(p) > -1 && getDays(currentSup, s.chave).length > 0; });
+      if (covered) promoDone++;
+    });
+    document.getElementById("statPromoTotal").textContent = promoTotal;
+    document.getElementById("statPromoDone").textContent = promoDone;
+    var promoPct = promoTotal ? Math.round(promoDone/promoTotal*100) : 0;
+    document.getElementById("statPromoBar").style.width = promoPct + "%";
+    document.getElementById("statPromoPct").textContent = promoPct + "%";
+    document.getElementById("statMulti").textContent = stores.filter(function(s){ return s.promotores.length > 1; }).length;
+
+    var destaqueStores = stores.filter(function(s){ return s.destaque; });
+    var destaqueTotal = destaqueStores.length;
+    var destaqueDone = destaqueStores.filter(function(s){ return getDays(currentSup, s.chave).length > 0; }).length;
+    document.getElementById("statDestaqueTotal").textContent = destaqueTotal;
+    document.getElementById("statDestaqueDone").textContent = destaqueDone;
+    var destaquePct = destaqueTotal ? Math.round(destaqueDone/destaqueTotal*100) : 0;
+    document.getElementById("statDestaqueBar").style.width = destaquePct + "%";
+    document.getElementById("statDestaquePct").textContent = destaquePct + "%";
+
+    renderFilterSelects(viewStores);
+
+    var ready = (done + foraDone) > 0;
+    document.getElementById("downloadBtn").disabled = !ready;
+    document.getElementById("clearBtn").disabled = isLocked(currentSup);
+
+    var saveBtn = document.getElementById("saveBtn");
+    var saveHint = document.getElementById("saveHint");
+    saveBtn.disabled = !ready || isLocked(currentSup);
+    var saved = savedState[currentSup];
+    if (!ready){
+      saveHint.textContent = "Marque pelo menos um dia para gravar";
+      saveHint.classList.remove("ready");
+    } else if (hasUnsavedChanges(currentSup)){
+      saveHint.textContent = saved ? "Alterações não gravadas desde " + formatSavedAt(saved.savedAt) : "Ainda não gravada nesta semana";
+      saveHint.classList.remove("ready");
+    } else {
+      saveHint.textContent = "Gravada em " + formatSavedAt(saved.savedAt);
+      saveHint.classList.add("ready");
+    }
+
+    var counts = {};
+    DAYS.forEach(function(d){ counts[d.code] = 0; });
+    stores.concat(fora).forEach(function(s){ getDays(currentSup, s.chave).forEach(function(d){ counts[d]++; }); });
+    document.getElementById("dayMini").innerHTML = DAYS.map(function(d){
+      return '<div class="d">'+d.label+'<b>'+counts[d.code]+'</b></div>';
+    }).join("");
+
+    var cdds = viewFora
+      ? Array.from(new Set(fora.map(function(s){ return s.cdd; }))).sort()
+      : cddsForSupervisor(currentSup);
+    document.getElementById("cddFilters").innerHTML =
+      '<button type="button" class="chip-filter'+(cddFilter==="TODOS"?" active":"")+'" data-cdd="TODOS">Todos ('+viewStores.length+')</button>' +
+      cdds.map(function(c){
+        var n = viewStores.filter(function(s){ return s.cdd===c; }).length;
+        return '<button type="button" class="chip-filter'+(cddFilter===c?" active":"")+'" data-cdd="'+escapeAttr(c)+'">'+escapeHtml(c)+' ('+n+')</button>';
+      }).join("");
+
+    Array.prototype.forEach.call(document.querySelectorAll(".chip-filter"), function(el){
+      el.addEventListener("click", function(){
+        cddFilter = el.getAttribute("data-cdd");
+        resetFilters(0);
+        renderAll();
+      });
+    });
+
+    // atalho para zerar todos os filtros de uma vez (só aparece com algum filtro ativo)
+    var algumFiltro = cddFilter !== "TODOS" || FILTER_CHAIN.some(function(f){ return filters[f.key]; });
+    document.getElementById("filtersClear").style.display = algumFiltro ? "" : "none";
+    document.getElementById("moreToggle").textContent = "Mais números e filtros" + (algumFiltro ? " · filtro ativo" : "");
+
+    // bloco de loja destaque só aparece se a carteira tiver alguma
+    document.getElementById("destaqueBlock").style.display = destaqueTotal ? "" : "none";
+    document.getElementById("legendDestaque").style.display = destaqueTotal ? "" : "none";
+  }
+
+  function renderTopbar(){
+    document.getElementById("supName").textContent = currentSup || "—";
+    var stores = currentSup ? storesForSupervisor(currentSup) : [];
+    var nf = currentSup ? foraAgendadas(currentSup).length : 0;
+    document.getElementById("supEyebrow").textContent = stores.length + " PDV" + (stores.length===1?"":"s") + " na carteira" +
+      (nf ? " · " + nf + " fora do roteiro agendada" + (nf===1?"":"s") : "");
+  }
+
+  function dayButtonsHtml(s){
+    var chave = s.chave;
+    var active = getDays(currentSup, chave);
+    var locked = isLocked(currentSup);
+    return '<div class="days">' + DAYS.map(function(d){
+      var on = active.indexOf(d.code) > -1;
+      var promo = s.promoDays.indexOf(d.code) > -1;
+      var quem = promo ? s.promoDet.filter(function(p){ return p.dias.indexOf(d.code) > -1; }).map(function(p){ return p.nome; }).join(", ") : "";
+      var title = d.label + (promo ? " — promotor na loja: " + quem : "");
+      return '<button class="day-btn'+(on?" on":"")+(promo?" promo":"")+'"'+(locked?" disabled":"")+' data-chave="'+escapeAttr(chave)+'" data-day="'+d.code+'" title="'+escapeAttr(title)+'">'+d.label.slice(0,3)+'</button>';
+    }).join("") + '</div>';
+  }
+
+  function diasLabel(codes){
+    return DAYS.filter(function(d){ return codes.indexOf(d.code) > -1; }).map(function(d){ return d.label; }).join(", ");
+  }
+
+  function promotoresHtml(s){
+    if (!s.promoDet.length) return "";
+    return '<div class="promos">' + s.promoDet.map(function(p){
+      var dias = diasLabel(p.dias);
+      var orig = (s.promoDet.length > 1 && p.origem && p.origem !== "Regular") ? '<span class="orig">'+escapeHtml(p.origem)+'</span>' : "";
+      return '<div class="p">Promotor: <b>'+escapeHtml(p.nome)+'</b>'+(dias ? ' · <span class="dias">'+escapeHtml(dias)+'</span>' : ' · <span>sem dia no roteiro</span>')+orig+'</div>';
+    }).join("") + '</div>';
+  }
+
+  function retrySync(sup){
+    savedState[sup].syncStatus = "sending";
+    persistSavedState();
+    renderAll();
+    syncToSheet(sup).then(function(){
+      savedState[sup].syncStatus = "ok";
+      persistSavedState();
+      renderAll();
+    }).catch(function(){
+      savedState[sup].syncStatus = "error";
+      persistSavedState();
+      renderAll();
+    });
+  }
+
+  function renderLockBanner(){
+    var el = document.getElementById("lockBanner");
+    var warn = document.getElementById("configWarn");
+    var viaArquivo = location.protocol === "file:"; // o Google bloqueia ler a planilha a partir de file://
+    warn.className = (sheetConfigured() && !viaArquivo) ? "" : "config-warn";
+    warn.textContent = !sheetConfigured() ? "Modo de teste: a planilha do gestor ainda não foi conectada. Você pode montar a agenda, mas Gravar e Limpar rota não enviam nada."
+      : viaArquivo ? "Página aberta com duplo clique: o Google não deixa ler a planilha assim, então a gravação não pode ser confirmada. Use o link do site publicado ou o ABRIR_SITE_LOCAL.bat."
+      : "";
+    if (!currentSup || !isLocked(currentSup)){ el.innerHTML = ""; el.className = ""; return; }
+    var saved = savedState[currentSup];
+    var statusText = "";
+    if (saved.syncStatus === "sending") statusText = " · enviando ao gestor…";
+    else if (saved.syncStatus === "ok") statusText = " · enviada ao gestor ✓";
+    else if (saved.syncStatus === "error") statusText = " · não consegui confirmar o envio ao gestor";
+    el.className = saved.syncStatus === "error" ? "err" : "";
+    el.innerHTML = '<span>🔒 Agenda gravada em '+formatSavedAt(saved.savedAt)+' e travada para edição nesta semana'+statusText+'. Para mudar algo, peça ao gestor para liberar.</span>' +
+      '<div style="display:flex;gap:8px;">' +
+      (saved.syncStatus === "error" ? '<button class="btn small ghost" id="retrySyncBtn">Tentar enviar de novo</button>' : '') +
+      '</div>';
+    var retryBtn = document.getElementById("retrySyncBtn");
+    if (retryBtn) retryBtn.addEventListener("click", function(){ retrySync(currentSup); });
+  }
+
+  function renderWeekSummary(){
+    if (!currentSup){ document.getElementById("weekSummary").innerHTML = ""; return; }
+    var stores = applyFilters(allStoresForSupervisor(currentSup));
+    var byChave = {};
+    stores.forEach(function(s){ byChave[s.chave] = s; });
+    var byDay = {};
+    DAYS.forEach(function(d){
+      // na ordem da visita; com filtro ativo mostra só as lojas visíveis, mas o número é o da agenda inteira
+      byDay[d.code] = dayOrder(currentSup, d.code).filter(function(c){ return byChave[c]; }).map(function(c){ return byChave[c]; });
+    });
+    var locked = isLocked(currentSup);
+    var filtrado = stores.length !== allStoresForSupervisor(currentSup).length;
+    document.getElementById("weekSummary").innerHTML = '<div class="board">' + DAYS.map(function(d){
+      var list = byDay[d.code];
+      var total = dayOrder(currentSup, d.code).length;
+      return '<div class="board-col"><h4>'+d.label+'<span class="n'+(list.length?'':' zero')+'">'+list.length+'</span></h4>' +
+        (list.length ? list.map(function(s){
+          var n = visitNumber(currentSup, d.code, s.chave);
+          var moves = locked ? '' :
+            '<span class="ord-moves">' +
+              '<button class="ord-btn" data-day="'+d.code+'" data-chave="'+escapeAttr(s.chave)+'" data-delta="-1" title="Visitar antes"'+(n<=1?' disabled':'')+'>▲</button>' +
+              '<button class="ord-btn" data-day="'+d.code+'" data-chave="'+escapeAttr(s.chave)+'" data-delta="1" title="Visitar depois"'+(n>=total?' disabled':'')+'>▼</button>' +
+            '</span>';
+          return '<div class="board-card'+(s.destaque?" destaque":"")+'"><div class="ord-row"><span class="ord-n" title="Ordem da visita no dia">'+n+'</span><div class="ord-body"><div class="l">'+(s.destaque?'<span class="destaque-star">★</span>':"")+escapeHtml(s.loja)+(s.promotores.length>1?' <span title="Loja com mais de um promotor">👥</span>':"")+(s.fora?'<span class="fora-badge">Fora do roteiro</span>':"")+'</div><div class="c">'+escapeHtml(s.cidade)+(s.promotores.length?' · '+escapeHtml(s.promotores.join(" | ")):"")+'</div></div>'+moves+'</div></div>';
+        }).join("") : '<div class="board-empty">Sem visitas</div>') +
+        (list.length && !locked ? '<button class="day-clear" data-day="'+d.code+'" title="Desmarca '+d.label+' das lojas deste card">× Limpar '+d.label+'</button>' : '') +
+      '</div>';
+    }).join("") + '</div>';
+
+    Array.prototype.forEach.call(document.querySelectorAll("#weekSummary .ord-btn"), function(btn){
+      btn.addEventListener("click", function(){
+        moveInDay(currentSup, btn.getAttribute("data-day"), btn.getAttribute("data-chave"), parseInt(btn.getAttribute("data-delta"), 10));
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("#weekSummary .day-clear"), function(btn){
+      btn.addEventListener("click", function(){
+        var sup = currentSup;
+        var code = btn.getAttribute("data-day");
+        var label = DAYS.filter(function(x){ return x.code === code; })[0].label;
+        var chaves = byDay[code].map(function(s){ return s.chave; });
+        var n = chaves.length;
+        showConfirm("Desmarcar "+label+" de "+n+" loja"+(n===1?"":"s")+(filtrado ? " (só as que aparecem com o filtro atual)" : "")+
+          "? Os outros dias continuam marcados. Depois clique em Gravar agenda para enviar ao gestor.", function(){
+          clearDay(sup, code, chaves);
+        });
+      });
+    });
+  }
+
+  function renderPdvList(){
+    if (!currentSup){ document.getElementById("pdvList").innerHTML = ""; return; }
+    document.getElementById("pdvPanelTag").textContent = viewFora ? "Lojas fora do roteiro" : "PDVs da carteira";
+    document.getElementById("foraSearchBox").style.display = viewFora ? "block" : "none";
+    document.getElementById("pdvLegend").style.display = viewFora ? "none" : "";
+    var stores = applyFilters(viewFora ? foraStoresForSupervisor(currentSup) : storesForSupervisor(currentSup));
+    var cortadas = 0;
+    if (viewFora){
+      var termos = foraSearch.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/\s+/).filter(Boolean);
+      if (termos.length) stores = stores.filter(function(s){ return termos.every(function(t){ return s.busca.indexOf(t) > -1; }); });
+      // agendadas primeiro, para não "sumirem" no meio da lista
+      stores = stores.filter(function(s){ return getDays(currentSup, s.chave).length; })
+        .concat(stores.filter(function(s){ return !getDays(currentSup, s.chave).length; }));
+      if (stores.length > FORA_MAX){ cortadas = stores.length - FORA_MAX; stores = stores.slice(0, FORA_MAX); }
+    }
+    if (!stores.length){ document.getElementById("pdvList").innerHTML = '<div class="empty-state">Nenhum PDV encontrado com esse filtro'+(viewFora && foraSearch ? ' / busca' : '')+'.</div>'; return; }
+
+    var groups = {};
+    var order = [];
+    stores.forEach(function(s){
+      if (!groups[s.cdd]){ groups[s.cdd] = []; order.push(s.cdd); }
+      groups[s.cdd].push(s);
+    });
+
+    var html = order.map(function(cdd){
+      var list = groups[cdd];
+      return '<div class="group-head">'+escapeHtml(cdd)+'<span class="count">'+list.length+' PDV'+(list.length===1?"":"s")+'</span></div>' +
+        list.map(function(s){
+          var hasDays = getDays(currentSup, s.chave).length > 0;
+          var locked = isLocked(currentSup);
+          var multi = s.promotores.length > 1;
+          return '<div class="store-row'+(s.destaque?" destaque":"")+(multi?" multi":"")+(hasDays?" has-days":"")+'">' +
+            (hasDays && !locked ? '<button class="remove-x" data-chave="'+escapeAttr(s.chave)+'" title="Remover esta loja da semana">×</button>' : "") +
+            '<div class="info">' +
+              '<div class="loja">'+(s.destaque?'<span class="destaque-star">★</span>':"")+escapeHtml(s.loja)+
+                (multi ? '<span class="multi-badge">👥 '+s.promotores.length+' promotores</span>' : "")+
+                (s.fora ? '<span class="fora-badge">Fora do roteiro</span>' : "")+'</div>' +
+              '<div class="meta">'+(s.fora ? 'Cód. '+escapeHtml(s.chave)+'<span class="sep">·</span>' : '')+escapeHtml(s.cidade)+(s.bairro && s.bairro !== "SEM BAIRRO" ? '<span class="sep">·</span>'+escapeHtml(s.bairro) : "")+(s.endereco && s.loja.indexOf(s.endereco) === -1 ? '<span class="sep">·</span>'+escapeHtml(s.endereco) : "")+'</div>' +
+              promotoresHtml(s) +
+            '</div>' +
+            dayButtonsHtml(s) +
+          '</div>';
+        }).join("");
+    }).join("");
+
+    if (cortadas) html += '<div class="fora-more">Mostrando '+FORA_MAX+' lojas — mais '+cortadas+' não exibidas. Use a busca ou os filtros de cidade/bairro para encontrar a loja.</div>';
+    document.getElementById("pdvList").innerHTML = html;
+
+    Array.prototype.forEach.call(document.querySelectorAll("#pdvList .day-btn"), function(btn){
+      btn.addEventListener("click", function(){
+        toggleDay(currentSup, btn.getAttribute("data-chave"), btn.getAttribute("data-day"));
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("#pdvList .remove-x"), function(btn){
+      btn.addEventListener("click", function(){
+        clearPdv(currentSup, btn.getAttribute("data-chave"));
+      });
+    });
+  }
+
+  function weekLabel(){
+    var txt = "";
+    var q = PERIODO_INICIO.split("-");
+    if (q.length === 3){
+      var d0 = new Date(+q[0], +q[1]-1, +q[2]), d1 = new Date(d0); d1.setDate(d1.getDate()+6);
+      function pad(n){ return n<10 ? "0"+n : ""+n; }
+      txt = "Agenda de " + pad(d0.getDate())+"/"+pad(d0.getMonth()+1) + " a " + pad(d1.getDate())+"/"+pad(d1.getMonth()+1) + " · ";
+    }
+    if (!WEEK_ID) return txt;
+    var p = WEEK_ID.split("-");
+    return txt + (p.length === 3 ? "publicada em " + p[2] + "/" + p[1] + "/" + p[0] : WEEK_ID);
+  }
+
+  function renderAll(){
+    document.getElementById("weekSideLabel").textContent = weekLabel();
+    renderSidebar();
+    renderTopbar();
+    renderLockBanner();
+    renderWeekSummary();
+    renderPdvList();
+  }
+
+  /* ---------------- export ---------------- */
+  function xmlEscape(s){ return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function buildAgendaXLS(){
+    // carteira inteira (inclusive não agendadas) + só as fora do roteiro que foram agendadas
+    var stores = storesForSupervisor(currentSup).concat(foraAgendadas(currentSup));
+    var dayIdxOf = {}; DAYS.forEach(function(d,i){ dayIdxOf[d.code] = i; });
+    var entries = [];
+    stores.forEach(function(s){
+      var days = getDays(currentSup, s.chave);
+      if (!days.length){ entries.push({s:s, dayIdx:99, dayLabel:"Não agendado"}); }
+      else { days.forEach(function(d){ entries.push({s:s, dayIdx:dayIdxOf[d], ordem: visitNumber(currentSup, d, s.chave), dayLabel: DAYS.filter(function(x){return x.code===d;})[0].label}); }); }
+    });
+    entries.sort(function(a,b){
+      if (a.dayIdx !== b.dayIdx) return a.dayIdx - b.dayIdx;
+      if ((a.ordem||0) !== (b.ordem||0)) return (a.ordem||0) - (b.ordem||0);
+      return a.s.loja.localeCompare(b.s.loja);
+    });
+    var header = ["SUPERVISOR","DIA","ORDEM","REGIONAL","LOJA","CIDADE","ENDEREÇO","PROMOTORES",DESTAQUE_NOME.toUpperCase(),"FORA DO ROTEIRO"];
+    var headerRow = "<Row>" + header.map(function(h){
+      return '<Cell ss:StyleID="Header"><Data ss:Type="String">'+xmlEscape(h)+'</Data></Cell>';
+    }).join("") + "</Row>";
+    var bodyRows = entries.map(function(e){
+      var s = e.s;
+      var cells = [currentSup, e.dayLabel, e.ordem ? String(e.ordem) : "", s.cdd, s.loja, s.cidade, s.endereco, s.promotores.join(" | "), s.destaque ? "Sim" : "", s.fora ? "Sim" : ""];
+      return "<Row>" + cells.map(function(v){
+        return '<Cell><Data ss:Type="String">'+xmlEscape(v)+'</Data></Cell>';
+      }).join("") + "</Row>";
+    }).join("");
+
+    return '<?xml version="1.0"?>' +
+      '<?mso-application progid="Excel.Sheet"?>' +
+      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
+      'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+      'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+      '<Styles><Style ss:ID="Header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#042B0B" ss:Pattern="Solid"/></Style></Styles>' +
+      '<Worksheet ss:Name="Agenda"><Table>' + headerRow + bodyRows + '</Table></Worksheet>' +
+      '</Workbook>';
+  }
+
+  /* ---------------- intake ---------------- */
+  var pendingText = null;
+
+  function tryEnableLoad(){
+    document.getElementById("loadBtn").disabled = !pendingText;
+  }
+
+  function handleFile(file){
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      pendingText = e.target.result;
+      var meta = document.getElementById("fileMeta");
+      meta.style.display = "flex";
+      meta.querySelector("span").textContent = file.name + " carregado";
+      document.getElementById("intakeError").textContent = "";
+      tryEnableLoad();
+    };
+    reader.onerror = function(){
+      document.getElementById("intakeError").textContent = "Não consegui ler esse arquivo. Tente colar o conteúdo abaixo.";
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function initIntake(){
+    var dz = document.getElementById("dropZone");
+    var fi = document.getElementById("fileInput");
+    var pa = document.getElementById("pasteArea");
+
+    dz.addEventListener("click", function(){ fi.click(); });
+    dz.addEventListener("keydown", function(e){ if (e.key==="Enter" || e.key===" "){ e.preventDefault(); fi.click(); } });
+    fi.addEventListener("change", function(){ handleFile(fi.files[0]); });
+
+    ["dragenter","dragover"].forEach(function(evt){
+      dz.addEventListener(evt, function(e){ e.preventDefault(); dz.classList.add("drag"); });
+    });
+    ["dragleave","drop"].forEach(function(evt){
+      dz.addEventListener(evt, function(e){ e.preventDefault(); dz.classList.remove("drag"); });
+    });
+    dz.addEventListener("drop", function(e){
+      var f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handleFile(f);
+    });
+
+    pa.addEventListener("input", function(){
+      if (pa.value.trim().length > 20){ pendingText = pa.value; }
+      else if (!document.getElementById("fileMeta").style.display || document.getElementById("fileMeta").style.display==="none"){ pendingText = pa.value.trim() ? pa.value : null; }
+      tryEnableLoad();
+    });
+
+    document.getElementById("loadBtn").addEventListener("click", function(){
+      var parsed = parseCSV(pendingText || "");
+      if (!parsed || !parsed.length){
+        document.getElementById("intakeError").textContent = "Não encontrei as colunas SUPERVISOR e LOJA nesse arquivo. Confira se está separado por ponto e vírgula (;).";
+        return;
+      }
+      rows = parsed;
+      localStorage.setItem(DATA_KEY, pendingText);
+      launchApp();
+    });
+  }
+
+  function launchApp(){
+    assignments = loadAssignments();
+    orders = loadOrders();
+    savedState = loadSavedState();
+    resetIfNewWeek();
+    currentSup = null;
+    document.getElementById("bootScreen").style.display = "none";
+    document.getElementById("intake").style.display = "none";
+    document.getElementById("app").classList.add("show");
+    document.body.classList.add("app-on");
+    renderSupSelect();
+    renderAll();
+    if (currentSup) syncFromRemoteAndRender(currentSup);
+  }
+
+  function showIntake(){
+    document.getElementById("bootScreen").style.display = "none";
+    document.getElementById("intake").style.display = "flex";
+  }
+
+  function fetchLatestData(){
+    // cache-busting na URL (nao só no header cache:no-store) porque alguns proxies/CDN
+    // intermediarios ignoram o header e servem uma copia antiga por tempo indeterminado -
+    // ja visto travando supervisores numa "semana" de meses atras.
+    var weekPromise = localGet(WEEK_URL).then(function(res){
+      return res.ok ? res.text() : "";
+    }).catch(function(){ return ""; });
+    var periodPromise = localGet(PERIOD_URL).then(function(res){
+      return res.ok ? res.text() : "";
+    }).catch(function(){ return ""; });
+    // opcional: se lojas_fora.csv não existir, o botão simplesmente não aparece
+    var foraPromise = localGet(FORA_URL).then(function(res){
+      return res.ok ? res.text() : "";
+    }).catch(function(){ return ""; }).then(function(t){ foraBySup = parseForaCSV(t); });
+    periodPromise.then(function(t){
+      t = (t||"").trim();
+      PERIODO_INICIO = /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
+    });
+
+    return localGet(DATA_URL).then(function(res){
+      if (!res.ok) throw new Error("http "+res.status);
+      return res.text();
+    }).then(function(text){
+      var parsed = parseCSV(text);
+      if (!parsed || !parsed.length) throw new Error("csv vazio ou colunas erradas");
+      rows = parsed;
+      try { localStorage.setItem(DATA_KEY, text); } catch(e){}
+      return weekPromise;
+    }).then(function(weekText){
+      WEEK_ID = (weekText||"").trim();
+      return Promise.all([periodPromise, foraPromise]).then(function(){ return true; });
+    });
+  }
+
+  function resetIfNewWeek(){
+    if (!WEEK_ID) return; // agenda_semana.txt ainda nao existe no repo ou nao carregou - nao mexe em nada
+    var localWeek = null;
+    try { localWeek = localStorage.getItem(WEEK_KEY); } catch(e){}
+    if (localWeek === WEEK_ID) return;
+    assignments = {};
+    orders = {};
+    savedState = {};
+    saveAssignments();
+    persistSavedState();
+    try { localStorage.setItem(WEEK_KEY, WEEK_ID); } catch(e){}
+  }
+
+  function initApp(){
+    document.getElementById("supSelect").addEventListener("change", function(e){
+      currentSup = e.target.value;
+      cddFilter = "TODOS"; resetFilters(0);
+      viewFora = false; foraSearch = ""; document.getElementById("foraSearch").value = "";
+      renderAll();
+      syncFromRemoteAndRender(currentSup);
+    });
+
+    document.getElementById("foraBtn").addEventListener("click", function(){
+      viewFora = !viewFora;
+      cddFilter = "TODOS"; resetFilters(0);
+      renderAll();
+      if (viewFora) document.getElementById("foraSearch").focus();
+    });
+    var searchTimer = null;
+    document.getElementById("foraSearch").addEventListener("input", function(e){
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function(){ foraSearch = e.target.value.trim(); renderPdvList(); }, 200);
+    });
+
+    document.getElementById("downloadBtn").addEventListener("click", function(e){
+      if (e.currentTarget.disabled) return;
+      var xml = buildAgendaXLS();
+      var blob = new Blob([xml], {type:"application/vnd.ms-excel"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = "agenda_"+(currentSup||"supervisor").replace(/\s+/g,"_")+".xls";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", function(){
+      if (!currentSup || isLocked(currentSup)) return;
+      var stores = allStoresForSupervisor(currentSup);
+      var doneCount = stores.filter(function(s){ return getDays(currentSup, s.chave).length > 0; }).length;
+      if (doneCount === 0) return;
+      if (!sheetConfigured()){
+        showConfirm("Desmarcar as "+doneCount+" loja"+(doneCount===1?"":"s")+" deste supervisor? "+NAO_CONFIG_MSG, function(){
+          assignments[currentSup] = {}; orders[currentSup] = {};
+          saveAssignments(); renderAll();
+        }, "Desmarcar tudo");
+        return;
+      }
+      showConfirm("Isso apaga "+doneCount+" loja"+(doneCount===1?"":"s")+" marcada"+(doneCount===1?"":"s")+" para "+currentSup+" nesta semana e já atualiza a planilha do gestor para 0 agendados. Não dá pra desfazer.", function(){
+        var sup = currentSup;
+        var btn = document.getElementById("clearBtn");
+        assignments[sup] = {};
+        orders[sup] = {};
+        saveAssignments();
+        savedState[sup] = { savedAt: Date.now(), snapshot: currentSnapshot(sup), locked: false, syncStatus: "sending" };
+        persistSavedState();
+        renderAll();
+        btn.textContent = "Enviando ao gestor…"; btn.disabled = true;
+        syncToSheet(sup).then(function(){
+          if (savedState[sup]) savedState[sup].syncStatus = "ok";
+          persistSavedState();
+          btn.textContent = "Enviado ✓";
+          setTimeout(function(){ btn.textContent = "Limpar rota"; renderAll(); }, 1600);
+        }).catch(function(){
+          if (savedState[sup]) savedState[sup].syncStatus = "error";
+          persistSavedState();
+          btn.textContent = "Falha ao enviar";
+          setTimeout(function(){ btn.textContent = "Limpar rota"; renderAll(); }, 1600);
+        });
+      });
+    });
+
+    document.getElementById("saveBtn").addEventListener("click", function(){
+      if (!currentSup || this.disabled) return;
+      if (!sheetConfigured()){ showConfirm(NAO_CONFIG_MSG); return; } // não trava sem ter para onde enviar
+      // guarda o supervisor: se a pessoa trocar o seletor durante o envio, o resultado
+      // continua indo para quem gravou (antes usava currentSup e quebrava/gravava no errado)
+      var sup = currentSup;
+      savedState[sup] = { savedAt: Date.now(), snapshot: currentSnapshot(sup), locked: true, syncStatus: "sending" };
+      persistSavedState();
+      renderAll();
+      syncToSheet(sup).then(function(){
+        if (savedState[sup]) savedState[sup].syncStatus = "ok";
+        persistSavedState();
+        renderAll();
+      }).catch(function(){
+        if (savedState[sup]) savedState[sup].syncStatus = "error";
+        persistSavedState();
+        renderAll();
+      });
+    });
+
+    document.getElementById("moreToggle").addEventListener("click", function(){
+      var open = document.getElementById("sidebar").classList.toggle("more-open");
+      this.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    document.getElementById("filtersClear").addEventListener("click", function(){
+      cddFilter = "TODOS"; resetFilters(0);
+      renderAll();
+    });
+  }
+
+  function applyClientTexts(){
+    document.getElementById("prazoTxt").textContent = PRAZO_TXT ? "⏰ " + PRAZO_TXT : "";
+    Array.prototype.forEach.call(document.querySelectorAll(".destaque-nome"), function(el){ el.textContent = DESTAQUE_NOME; });
+  }
+
+  function boot(){
+    applyClientTexts();
+    initIntake();
+    initApp();
+    fetchLatestData().then(function(){
+      launchApp();
+    }).catch(function(){
+      if (location.protocol === "file:"){
+        var lede = document.querySelector("#intake .lede") || document.querySelector(".lede");
+        if (lede) lede.textContent = "Esta página foi aberta direto do arquivo (duplo clique), e o navegador bloqueia a leitura dos dados assim. Abra pelo link do site publicado ou, no computador, pelo ABRIR_SITE_LOCAL.bat.";
+      }
+      var saved = null;
+      try { saved = localStorage.getItem(DATA_KEY); } catch(e){}
+      if (saved){
+        var parsed = parseCSV(saved);
+        if (parsed && parsed.length){
+          rows = parsed;
+          launchApp();
+          return;
+        }
+      }
+      showIntake();
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", boot);
+})();
+</script>
+</body>
+</html>
