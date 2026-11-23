@@ -538,6 +538,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="agenda_dados.js"></script>
 <script>
 (function(){
@@ -551,11 +552,9 @@
     {code:"SAB", label:"Sáb", idx:5}
   ];
   /* ======== CONFIGURAÇÃO DO CLIENTE (o que muda de um cliente para outro) ======== */
-  // Prazo exibido ao supervisor (só texto, sem trava). Deixe "" para esconder.
-  var PRAZO_TXT = "Prazo para gravar: até DIA-DA-SEMANA, dd/mm";
-  // Nome do conceito de loja destaque (INCO contém "GOLDEN" ou coluna DESTAQUE = SIM).
-  // Se a carteira não tiver nenhuma loja destaque, o bloco some sozinho.
-  var DESTAQUE_NOME = "Golden Store";
+  var CFG = window.AGENDA_CONFIG || {}; // site/config.js (configuração única das duas telas)
+  var PRAZO_TXT = CFG.prazo || "";            // "" esconde
+  var DESTAQUE_NOME = CFG.destaqueNome || "Loja destaque";
   // Prefixo do localStorage: único por cliente (evita misturar agendas no mesmo domínio).
   var LS = "agopella_";
   /* ============================================================================== */
@@ -568,9 +567,10 @@
   var WEEK_URL = "agenda_semana.txt";
   var FORA_URL = "lojas_fora.csv"; // lojas da base total sem promotor, nas cidades de cada supervisor - gerado pelo .bat
   var PERIOD_URL = "agenda_periodo.txt"; // data de início (domingo) da semana da agenda, yyyy-mm-dd - gravado pelo .bat
-  var SYNC_URL = "https://script.google.com/macros/s/AKfycbzSRL62avTKZ8NWp2cagqMlr_9yXoOLkTAexLBEGqsPW19fgltCDqIE9bhq4EJUXxEI/exec"; // termina em /exec
-  var DETAIL_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7L_hSsYQYqCAf7xREakLd5UCpLVqzv5MJPo8I1jL0WrA9vuCgWKIBY7iWe9CY418FrrisHhaaVW8A/pub?gid=979993841&single=true&output=csv";
-  var STATUS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7L_hSsYQYqCAf7xREakLd5UCpLVqzv5MJPo8I1jL0WrA9vuCgWKIBY7iWe9CY418FrrisHhaaVW8A/pub?gid=741357542&single=true&output=csv";
+  // planilha: sem config.js (ou com COLE_AQUI) as telas ficam em "Modo de teste"
+  var SYNC_URL = CFG.syncUrl || "COLE_AQUI";
+  var DETAIL_CSV_URL = CFG.detalheCsvUrl || "COLE_AQUI";
+  var STATUS_CSV_URL = CFG.statusCsvUrl || "COLE_AQUI";
   // true quando as 3 URLs da planilha já foram coladas (sem isso não há envio nem sincronização)
   function sheetConfigured(){
     return [SYNC_URL, DETAIL_CSV_URL, STATUS_CSV_URL].every(function(u){ return u && u.indexOf("COLE_AQUI") !== 0; });
@@ -697,15 +697,29 @@
     });
     return out;
   }
+  // Cache das listas de lojas por supervisor (A-06). A base (rows/foraBySup) só muda quando os dados são
+  // carregados, mas antes cada clique varria todas as linhas da base ~8 vezes. Refaz sozinho se a base trocar.
+  // As listas devolvidas são compartilhadas: quem usar deve filtrar/copiar, nunca alterar no lugar.
+  var cacheLojas = { rows: null, fora: null, carteira: {}, foraSup: {}, todas: {} };
+  function cacheAtual(){
+    if (cacheLojas.rows !== rows || cacheLojas.fora !== foraBySup) cacheLojas = { rows: rows, fora: foraBySup, carteira: {}, foraSup: {}, todas: {} };
+    return cacheLojas;
+  }
   function foraStoresForSupervisor(sup){
-    // não repete loja que já está na carteira dele (segurança caso as bases mudem em datas diferentes)
-    var naCarteira = {};
-    storesForSupervisor(sup).forEach(function(s){ naCarteira[s.chave] = 1; });
-    return (foraBySup[sup] || []).filter(function(s){ return !naCarteira[s.chave]; });
+    var c = cacheAtual();
+    if (!c.foraSup[sup]){
+      // não repete loja que já está na carteira dele (segurança caso as bases mudem em datas diferentes)
+      var naCarteira = {};
+      storesForSupervisor(sup).forEach(function(s){ naCarteira[s.chave] = 1; });
+      c.foraSup[sup] = (foraBySup[sup] || []).filter(function(s){ return !naCarteira[s.chave]; });
+    }
+    return c.foraSup[sup];
   }
   // carteira + fora do roteiro: tudo que pode entrar na agenda
   function allStoresForSupervisor(sup){
-    return storesForSupervisor(sup).concat(foraStoresForSupervisor(sup));
+    var c = cacheAtual();
+    if (!c.todas[sup]) c.todas[sup] = storesForSupervisor(sup).concat(foraStoresForSupervisor(sup));
+    return c.todas[sup];
   }
   function foraAgendadas(sup){
     return foraStoresForSupervisor(sup).filter(function(s){ return getDays(sup, s.chave).length > 0; });
@@ -747,7 +761,9 @@
     var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
     setDayOrder(sup, code, list);
     saveAssignments();
-    renderAll();
+    // a ordem não aparece na lista de PDVs: atualiza só os painéis que dependem dela (A-06)
+    if (sup !== currentSup) return renderAll();
+    renderSidebar(); renderTopbar(); renderLockBanner(); renderWeekSummary();
   }
 
   function loadSavedState(){
@@ -1015,6 +1031,11 @@
   }
 
   function storesForSupervisor(sup){
+    var c = cacheAtual();
+    if (!c.carteira[sup]) c.carteira[sup] = montaCarteira(sup);
+    return c.carteira[sup];
+  }
+  function montaCarteira(sup){
     var map = new Map();
     for (var i=0;i<rows.length;i++){
       var r = rows[i];
@@ -1100,14 +1121,14 @@
     if (days.length) assignments[sup][chave] = days;
     else delete assignments[sup][chave];
     saveAssignments();
-    renderAll();
+    if (sup === currentSup) renderDepoisDeMarcar(chave); else renderAll();
   }
 
   function clearPdv(sup, chave){
     if (!assignments[sup]) return;
     delete assignments[sup][chave];
     saveAssignments();
-    renderAll();
+    if (sup === currentSup) renderDepoisDeMarcar(chave); else renderAll();
   }
 
   // Tira um dia da semana das lojas indicadas (só as que aparecem no card, respeitando os filtros).
@@ -1125,16 +1146,40 @@
     renderAll();
   }
 
+  // "11 lojas em 4 dias (Seg, Ter, Qua, Sex)." — carteira + fora do roteiro marcadas
+  function resumoDaSemana(sup){
+    var n = allStoresForSupervisor(sup).filter(function(s){ return getDays(sup, s.chave).length > 0; }).length;
+    var dias = DAYS.filter(function(d){ return dayOrder(sup, d.code).length > 0; }).map(function(d){ return d.label; });
+    return n + " loja" + (n === 1 ? "" : "s") + " em " + dias.length + " dia" + (dias.length === 1 ? "" : "s") +
+      (dias.length ? " (" + dias.join(", ") + ")" : "") + ".";
+  }
+  // Envia a agenda do supervisor e trava (o supervisor vem guardado do clique, não do seletor atual).
+  function gravarAgenda(sup){
+    savedState[sup] = { savedAt: Date.now(), snapshot: currentSnapshot(sup), locked: true, syncStatus: "sending" };
+    persistSavedState();
+    renderAll();
+    syncToSheet(sup).then(function(){
+      if (savedState[sup]) savedState[sup].syncStatus = "ok";
+      persistSavedState();
+      renderAll();
+    }).catch(function(){
+      if (savedState[sup]) savedState[sup].syncStatus = "error";
+      persistSavedState();
+      renderAll();
+    });
+  }
+
   // Modal próprio (o confirm() do navegador é bloqueado em alguns ambientes).
-  // Sem onConfirm, vira um aviso simples com um botão "Entendi".
-  function showConfirm(message, onConfirm, okLabel){
+  // Sem onConfirm, vira um aviso simples com um botão "Entendi". okClass troca o estilo do botão
+  // de confirmar (padrão: vermelho, para ações destrutivas; "primary" para ações normais como Gravar).
+  function showConfirm(message, onConfirm, okLabel, okClass){
     var overlay = document.getElementById("modalOverlay");
     document.getElementById("modalMessage").textContent = message;
     var confirmBtn = document.getElementById("modalConfirm");
     var cancelBtn = document.getElementById("modalCancel");
     var info = typeof onConfirm !== "function";
     confirmBtn.textContent = okLabel || (info ? "Entendi" : "Confirmar");
-    confirmBtn.className = "btn small " + (info ? "primary" : "danger-solid");
+    confirmBtn.className = "btn small " + (okClass || (info ? "primary" : "danger-solid"));
     cancelBtn.style.display = info ? "none" : "";
     overlay.style.display = "flex";
     confirmBtn.focus();
@@ -1151,7 +1196,7 @@
     cancelBtn.addEventListener("click", onCancel);
     document.addEventListener("keydown", onKey);
   }
-  var NAO_CONFIG_MSG = "O envio para o gestor ainda não está ativo: faltam as URLs da planilha (procure COLE_AQUI no código). As marcações ficam salvas só neste aparelho.";
+  var NAO_CONFIG_MSG = "O envio para o gestor ainda não está ativo: faltam as URLs da planilha (preencha o config.js). As marcações ficam salvas só neste aparelho.";
 
   /* ---------------- rendering ---------------- */
   function renderSupSelect(){
@@ -1342,22 +1387,27 @@
 
   function renderWeekSummary(){
     if (!currentSup){ document.getElementById("weekSummary").innerHTML = ""; return; }
-    var stores = applyFilters(allStoresForSupervisor(currentSup));
+    var todas = allStoresForSupervisor(currentSup);
+    var stores = applyFilters(todas);
     var byChave = {};
     stores.forEach(function(s){ byChave[s.chave] = s; });
-    var byDay = {};
+    var byDay = {}, ordemDia = {}, posDia = {};
     DAYS.forEach(function(d){
       // na ordem da visita; com filtro ativo mostra só as lojas visíveis, mas o número é o da agenda inteira
-      byDay[d.code] = dayOrder(currentSup, d.code).filter(function(c){ return byChave[c]; }).map(function(c){ return byChave[c]; });
+      ordemDia[d.code] = dayOrder(currentSup, d.code);
+      posDia[d.code] = {};
+      ordemDia[d.code].forEach(function(c, i){ posDia[d.code][c] = i + 1; });
+      byDay[d.code] = ordemDia[d.code].filter(function(c){ return byChave[c]; }).map(function(c){ return byChave[c]; });
     });
     var locked = isLocked(currentSup);
-    var filtrado = stores.length !== allStoresForSupervisor(currentSup).length;
+    var filtrado = stores.length !== todas.length;
+    resumoAtual = { byDay: byDay, filtrado: filtrado }; // usado pelo "× Limpar dia" (ouvinte delegado)
     document.getElementById("weekSummary").innerHTML = '<div class="board">' + DAYS.map(function(d){
       var list = byDay[d.code];
-      var total = dayOrder(currentSup, d.code).length;
+      var total = ordemDia[d.code].length;
       return '<div class="board-col"><h4>'+d.label+'<span class="n'+(list.length?'':' zero')+'">'+list.length+'</span></h4>' +
         (list.length ? list.map(function(s){
-          var n = visitNumber(currentSup, d.code, s.chave);
+          var n = posDia[d.code][s.chave];
           var moves = locked ? '' :
             '<span class="ord-moves">' +
               '<button class="ord-btn" data-day="'+d.code+'" data-chave="'+escapeAttr(s.chave)+'" data-delta="-1" title="Visitar antes"'+(n<=1?' disabled':'')+'>▲</button>' +
@@ -1368,26 +1418,56 @@
         (list.length && !locked ? '<button class="day-clear" data-day="'+d.code+'" title="Desmarca '+d.label+' das lojas deste card">× Limpar '+d.label+'</button>' : '') +
       '</div>';
     }).join("") + '</div>';
+  }
 
-    Array.prototype.forEach.call(document.querySelectorAll("#weekSummary .ord-btn"), function(btn){
-      btn.addEventListener("click", function(){
-        moveInDay(currentSup, btn.getAttribute("data-day"), btn.getAttribute("data-chave"), parseInt(btn.getAttribute("data-delta"), 10));
-      });
+  // "× Limpar <dia>" do Resumo: desmarca o dia das lojas visíveis no card (respeita os filtros).
+  var resumoAtual = { byDay: {}, filtrado: false };
+  function pedirLimparDia(code){
+    var sup = currentSup;
+    var label = DAYS.filter(function(x){ return x.code === code; })[0].label;
+    var chaves = (resumoAtual.byDay[code] || []).map(function(s){ return s.chave; });
+    var n = chaves.length;
+    showConfirm("Desmarcar "+label+" de "+n+" loja"+(n===1?"":"s")+(resumoAtual.filtrado ? " (só as que aparecem com o filtro atual)" : "")+
+      "? Os outros dias continuam marcados. Depois clique em Gravar agenda para enviar ao gestor.", function(){
+      clearDay(sup, code, chaves);
     });
+  }
 
-    Array.prototype.forEach.call(document.querySelectorAll("#weekSummary .day-clear"), function(btn){
-      btn.addEventListener("click", function(){
-        var sup = currentSup;
-        var code = btn.getAttribute("data-day");
-        var label = DAYS.filter(function(x){ return x.code === code; })[0].label;
-        var chaves = byDay[code].map(function(s){ return s.chave; });
-        var n = chaves.length;
-        showConfirm("Desmarcar "+label+" de "+n+" loja"+(n===1?"":"s")+(filtrado ? " (só as que aparecem com o filtro atual)" : "")+
-          "? Os outros dias continuam marcados. Depois clique em Gravar agenda para enviar ao gestor.", function(){
-          clearDay(sup, code, chaves);
-        });
-      });
+  // Uma linha da lista de PDVs (data-chave identifica a linha para a atualização pontual).
+  function linhaLojaHtml(s){
+    var hasDays = getDays(currentSup, s.chave).length > 0;
+    var locked = isLocked(currentSup);
+    var multi = s.promotores.length > 1;
+    return '<div class="store-row'+(s.destaque?" destaque":"")+(multi?" multi":"")+(hasDays?" has-days":"")+'" data-chave="'+escapeAttr(s.chave)+'">' +
+      (hasDays && !locked ? '<button class="remove-x" data-chave="'+escapeAttr(s.chave)+'" title="Remover esta loja da semana">×</button>' : "") +
+      '<div class="info">' +
+        '<div class="loja">'+(s.destaque?'<span class="destaque-star">★</span>':"")+escapeHtml(s.loja)+
+          (multi ? '<span class="multi-badge">👥 '+s.promotores.length+' promotores</span>' : "")+
+          (s.fora ? '<span class="fora-badge">Fora do roteiro</span>' : "")+'</div>' +
+        '<div class="meta">'+(s.fora ? 'Cód. '+escapeHtml(s.chave)+'<span class="sep">·</span>' : '')+escapeHtml(s.cidade)+(s.bairro && s.bairro !== "SEM BAIRRO" ? '<span class="sep">·</span>'+escapeHtml(s.bairro) : "")+(s.endereco && s.loja.indexOf(s.endereco) === -1 ? '<span class="sep">·</span>'+escapeHtml(s.endereco) : "")+'</div>' +
+        promotoresHtml(s) +
+      '</div>' +
+      dayButtonsHtml(s) +
+    '</div>';
+  }
+
+  // Depois de marcar/desmarcar UMA loja (A-06): redesenha só a linha dela na lista, e os painéis
+  // que dependem das marcações (laterais, resumo, banner). Se a linha não estiver na tela, redesenha tudo.
+  function renderDepoisDeMarcar(chave){
+    var lista = document.getElementById("pdvList");
+    var linha = null;
+    Array.prototype.some.call(lista.querySelectorAll(".store-row"), function(el){
+      if (el.getAttribute("data-chave") === chave){ linha = el; return true; }
+      return false;
     });
+    var loja = null;
+    allStoresForSupervisor(currentSup).some(function(s){ if (s.chave === chave){ loja = s; return true; } return false; });
+    if (!linha || !loja){ renderAll(); return; }
+    renderSidebar();
+    renderTopbar();
+    renderLockBanner();
+    renderWeekSummary();
+    linha.outerHTML = linhaLojaHtml(loja);
   }
 
   function renderPdvList(){
@@ -1417,38 +1497,12 @@
     var html = order.map(function(cdd){
       var list = groups[cdd];
       return '<div class="group-head">'+escapeHtml(cdd)+'<span class="count">'+list.length+' PDV'+(list.length===1?"":"s")+'</span></div>' +
-        list.map(function(s){
-          var hasDays = getDays(currentSup, s.chave).length > 0;
-          var locked = isLocked(currentSup);
-          var multi = s.promotores.length > 1;
-          return '<div class="store-row'+(s.destaque?" destaque":"")+(multi?" multi":"")+(hasDays?" has-days":"")+'">' +
-            (hasDays && !locked ? '<button class="remove-x" data-chave="'+escapeAttr(s.chave)+'" title="Remover esta loja da semana">×</button>' : "") +
-            '<div class="info">' +
-              '<div class="loja">'+(s.destaque?'<span class="destaque-star">★</span>':"")+escapeHtml(s.loja)+
-                (multi ? '<span class="multi-badge">👥 '+s.promotores.length+' promotores</span>' : "")+
-                (s.fora ? '<span class="fora-badge">Fora do roteiro</span>' : "")+'</div>' +
-              '<div class="meta">'+(s.fora ? 'Cód. '+escapeHtml(s.chave)+'<span class="sep">·</span>' : '')+escapeHtml(s.cidade)+(s.bairro && s.bairro !== "SEM BAIRRO" ? '<span class="sep">·</span>'+escapeHtml(s.bairro) : "")+(s.endereco && s.loja.indexOf(s.endereco) === -1 ? '<span class="sep">·</span>'+escapeHtml(s.endereco) : "")+'</div>' +
-              promotoresHtml(s) +
-            '</div>' +
-            dayButtonsHtml(s) +
-          '</div>';
-        }).join("");
+        list.map(linhaLojaHtml).join("");
     }).join("");
 
     if (cortadas) html += '<div class="fora-more">Mostrando '+FORA_MAX+' lojas — mais '+cortadas+' não exibidas. Use a busca ou os filtros de cidade/bairro para encontrar a loja.</div>';
     document.getElementById("pdvList").innerHTML = html;
-
-    Array.prototype.forEach.call(document.querySelectorAll("#pdvList .day-btn"), function(btn){
-      btn.addEventListener("click", function(){
-        toggleDay(currentSup, btn.getAttribute("data-chave"), btn.getAttribute("data-day"));
-      });
-    });
-
-    Array.prototype.forEach.call(document.querySelectorAll("#pdvList .remove-x"), function(btn){
-      btn.addEventListener("click", function(){
-        clearPdv(currentSup, btn.getAttribute("data-chave"));
-      });
-    });
+    // cliques nos dias e no × são tratados por um ouvinte delegado (initApp), não por botão
   }
 
   function weekLabel(){
@@ -1717,18 +1771,25 @@
       // guarda o supervisor: se a pessoa trocar o seletor durante o envio, o resultado
       // continua indo para quem gravou (antes usava currentSup e quebrava/gravava no errado)
       var sup = currentSup;
-      savedState[sup] = { savedAt: Date.now(), snapshot: currentSnapshot(sup), locked: true, syncStatus: "sending" };
-      persistSavedState();
-      renderAll();
-      syncToSheet(sup).then(function(){
-        if (savedState[sup]) savedState[sup].syncStatus = "ok";
-        persistSavedState();
-        renderAll();
-      }).catch(function(){
-        if (savedState[sup]) savedState[sup].syncStatus = "error";
-        persistSavedState();
-        renderAll();
-      });
+      // A-05: gravar trava a agenda; confirma antes, com o resumo da semana (evita trava por toque acidental)
+      showConfirm("Gravar e enviar ao gestor? " + resumoDaSemana(sup) +
+        " Depois de gravada, a agenda fica travada: para mudar, o gestor precisa liberar.", function(){
+        gravarAgenda(sup);
+      }, "Gravar e enviar", "primary");
+    });
+
+    // Delegação (A-06): um ouvinte por painel em vez de recriar milhares a cada redesenho.
+    document.getElementById("pdvList").addEventListener("click", function(e){
+      var b = e.target.closest ? e.target.closest(".day-btn, .remove-x") : null;
+      if (!b || b.disabled || !currentSup) return;
+      if (b.classList.contains("day-btn")) toggleDay(currentSup, b.getAttribute("data-chave"), b.getAttribute("data-day"));
+      else clearPdv(currentSup, b.getAttribute("data-chave"));
+    });
+    document.getElementById("weekSummary").addEventListener("click", function(e){
+      var b = e.target.closest ? e.target.closest(".ord-btn, .day-clear") : null;
+      if (!b || b.disabled || !currentSup) return;
+      if (b.classList.contains("ord-btn")) moveInDay(currentSup, b.getAttribute("data-day"), b.getAttribute("data-chave"), parseInt(b.getAttribute("data-delta"), 10));
+      else pedirLimparDia(b.getAttribute("data-day"));
     });
 
     document.getElementById("moreToggle").addEventListener("click", function(){
