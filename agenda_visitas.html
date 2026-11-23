@@ -756,18 +756,17 @@
     Object.keys(st).forEach(function(sup){
       var s = st[sup];
       if (!s) return;
-      // aberto com duplo clique a gravação nunca pode ser confirmada: trava local sem confirmação não vale
-      if (location.protocol === "file:" && s.syncStatus !== "ok"){ delete st[sup]; return; }
       // página fechada/recarregada no meio do envio: não fica "enviando…" para sempre, vira falha com "Tentar de novo"
       if (s.syncStatus === "sending") s.syncStatus = "error";
     });
     return st;
   }
-  // Pode enviar à planilha? Não sem as URLs, nem aberto com duplo clique (o Google bloqueia a confirmação).
-  function podeEnviar(){ return sheetConfigured() && location.protocol !== "file:"; }
+  // Pode enviar à planilha? Precisa das URLs e, no arquivo aberto com duplo clique, que a leitura
+  // direta pelo Apps Script funcione (sem ela a gravação não pode ser confirmada).
+  function podeEnviar(){ return sheetConfigured() && !(location.protocol === "file:" && leituraDireta === false); }
   function msgNaoEnvia(){
-    return location.protocol === "file:"
-      ? "Esta página foi aberta com duplo clique, e assim o envio ao gestor não pode ser confirmado. Abra pelo link da agenda e grave por lá. Suas marcações ficam salvas só neste aparelho."
+    return sheetConfigured()
+      ? "Não consegui falar com a planilha do gestor agora (confira a internet). Suas marcações ficam salvas neste aparelho; feche e abra a agenda de novo e grave."
       : NAO_CONFIG_MSG;
   }
   function persistSavedState(){
@@ -844,8 +843,8 @@
   // ~2,5 min no total: o CSV publicado do Google já levou 37 s (e até ~3 min) para mostrar uma gravação
   var VERIFY_WAITS = [1500, 2500, 4000, 6000, 8000, 10000, 15000, 20000, 25000, 30000, 30000];
   function verifySync(sup, payload, attempt, sentAt){
-    return fetch(csvUrlWithCacheBust(STATUS_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); }).then(function(text){
-      var rows = parseCsvGeneric(text);
+    return lerPlanilha().then(function(res){
+      var rows = parseCsvGeneric(res[1]);
       if (!rows.length) throw new Error("planilha sem dados");
       var header = rows[0];
       var idx = {};
@@ -888,6 +887,42 @@
     return rows.filter(function(r){ return r.length>1 || (r[0]||"").trim().length; });
   }
 
+  // Lê a planilha (abas Status e Detalhe) direto do Apps Script (doGet com callback, "JSONP").
+  // Por quê: funciona até com o arquivo aberto com duplo clique (o Google bloqueia o CSV publicado
+  // a partir de file://) e lê o dado na hora, sem o cache de minutos do "Publicar na Web".
+  // Se o Apps Script ainda for a versão antiga (sem leitura), cai no CSV publicado, como antes.
+  var leituraDireta = null; // true = Apps Script respondeu; false = não respondeu
+  function lerPlanilhaDireta(){
+    return new Promise(function(resolve, reject){
+      var cb = "__agendaLeitura" + Date.now() + Math.floor(Math.random()*1e6);
+      var s = document.createElement("script");
+      var fim = false;
+      var timer = setTimeout(function(){ encerra(); reject(new Error("tempo esgotado")); }, 20000);
+      function encerra(){ fim = true; clearTimeout(timer); window[cb] = function(){}; if (s.parentNode) s.parentNode.removeChild(s); }
+      window[cb] = function(dados){
+        if (fim) return;
+        encerra();
+        if (dados && typeof dados.status === "string") resolve([dados.detalhe || "", dados.status]);
+        else reject(new Error("resposta inválida"));
+      };
+      s.onerror = function(){ if (!fim){ encerra(); reject(new Error("falha de rede")); } };
+      s.onload = function(){ if (!fim){ encerra(); reject(new Error("Apps Script sem leitura (versão antiga)")); } };
+      s.src = SYNC_URL + "?callback=" + cb + "&_=" + Date.now();
+      document.head.appendChild(s);
+    });
+  }
+  // Devolve [textoDetalhe, textoStatus] em CSV.
+  function lerPlanilha(){
+    return lerPlanilhaDireta().then(function(r){ leituraDireta = true; return r; }, function(err){
+      leituraDireta = false;
+      if (location.protocol === "file:") throw err; // com duplo clique o CSV publicado é bloqueado
+      return Promise.all([
+        fetch(csvUrlWithCacheBust(DETAIL_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); }),
+        fetch(csvUrlWithCacheBust(STATUS_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); })
+      ]);
+    });
+  }
+
   // Lê um arquivo da pasta do site. Aberto com duplo clique (file://) o navegador bloqueia o fetch;
   // nesse caso usa a cópia de agenda_dados.js (gerada pelo ATUALIZAR_AGENDA.bat).
   function localGet(url){
@@ -903,10 +938,7 @@
 
   function fetchRemoteState(sup){
     if (!sheetConfigured()) return Promise.resolve(false);
-    return Promise.all([
-      fetch(csvUrlWithCacheBust(DETAIL_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); }),
-      fetch(csvUrlWithCacheBust(STATUS_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); })
-    ]).then(function(results){
+    return lerPlanilha().then(function(results){
       var detailRows = parseCsvGeneric(results[0]);
       var statusRows = parseCsvGeneric(results[1]);
       if (!detailRows.length || !statusRows.length) return false;
@@ -1288,10 +1320,10 @@
   function renderLockBanner(){
     var el = document.getElementById("lockBanner");
     var warn = document.getElementById("configWarn");
-    var viaArquivo = location.protocol === "file:"; // o Google bloqueia ler a planilha a partir de file://
-    warn.className = (sheetConfigured() && !viaArquivo) ? "" : "config-warn";
+    var semLeitura = location.protocol === "file:" && leituraDireta === false; // arquivo sem acesso à planilha
+    warn.className = (sheetConfigured() && !semLeitura) ? "" : "config-warn";
     warn.textContent = !sheetConfigured() ? "Modo de teste: a planilha do gestor ainda não foi conectada. Você pode montar a agenda, mas Gravar e Limpar rota não enviam nada."
-      : viaArquivo ? "Página aberta com duplo clique: o Google não deixa ler a planilha assim, então a gravação não pode ser confirmada. Use o link do site publicado ou o ABRIR_SITE_LOCAL.bat."
+      : semLeitura ? "Sem conexão com a planilha do gestor: você pode montar a agenda, mas só vai conseguir gravar quando a conexão voltar. Confira a internet e abra a agenda de novo."
       : "";
     if (!currentSup || !isLocked(currentSup)){ el.innerHTML = ""; el.className = ""; return; }
     var saved = savedState[currentSup];
@@ -1724,7 +1756,7 @@
     }).catch(function(){
       if (location.protocol === "file:"){
         var lede = document.querySelector("#intake .lede") || document.querySelector(".lede");
-        if (lede) lede.textContent = "Esta página foi aberta direto do arquivo (duplo clique), e o navegador bloqueia a leitura dos dados assim. Abra pelo link do site publicado ou, no computador, pelo ABRIR_SITE_LOCAL.bat.";
+        if (lede) lede.textContent = "Não encontrei as lojas desta agenda dentro do arquivo. Peça ao gestor o arquivo da agenda atualizado.";
       }
       var saved = null;
       try { saved = localStorage.getItem(DATA_KEY); } catch(e){}
