@@ -751,7 +751,24 @@
   }
 
   function loadSavedState(){
-    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || "{}"); } catch(e){ return {}; }
+    var st;
+    try { st = JSON.parse(localStorage.getItem(SAVED_KEY) || "{}"); } catch(e){ st = {}; }
+    Object.keys(st).forEach(function(sup){
+      var s = st[sup];
+      if (!s) return;
+      // aberto com duplo clique a gravação nunca pode ser confirmada: trava local sem confirmação não vale
+      if (location.protocol === "file:" && s.syncStatus !== "ok"){ delete st[sup]; return; }
+      // página fechada/recarregada no meio do envio: não fica "enviando…" para sempre, vira falha com "Tentar de novo"
+      if (s.syncStatus === "sending") s.syncStatus = "error";
+    });
+    return st;
+  }
+  // Pode enviar à planilha? Não sem as URLs, nem aberto com duplo clique (o Google bloqueia a confirmação).
+  function podeEnviar(){ return sheetConfigured() && location.protocol !== "file:"; }
+  function msgNaoEnvia(){
+    return location.protocol === "file:"
+      ? "Esta página foi aberta com duplo clique, e assim o envio ao gestor não pode ser confirmado. Abra pelo link da agenda e grave por lá. Suas marcações ficam salvas só neste aparelho."
+      : NAO_CONFIG_MSG;
   }
   function persistSavedState(){
     localStorage.setItem(SAVED_KEY, JSON.stringify(savedState));
@@ -824,7 +841,8 @@
   // Compara com a hora do envio (folga de 60 s para relógio do aparelho adiantado, a mesma
   // tolerância de antes), e não com "agora": as tentativas levam tempo e o CSV publicado
   // demora a refletir, então a janela antiga "últimos 60 s" vencia no meio das tentativas.
-  var VERIFY_WAITS = [1500, 2500, 4000, 6000, 8000, 10000]; // ~32 s no total
+  // ~2,5 min no total: o CSV publicado do Google já levou 37 s (e até ~3 min) para mostrar uma gravação
+  var VERIFY_WAITS = [1500, 2500, 4000, 6000, 8000, 10000, 15000, 20000, 25000, 30000, 30000];
   function verifySync(sup, payload, attempt, sentAt){
     return fetch(csvUrlWithCacheBust(STATUS_CSV_URL), {cache:"no-store"}).then(function(r){ return r.text(); }).then(function(text){
       var rows = parseCsvGeneric(text);
@@ -1630,8 +1648,8 @@
       var stores = allStoresForSupervisor(currentSup);
       var doneCount = stores.filter(function(s){ return getDays(currentSup, s.chave).length > 0; }).length;
       if (doneCount === 0) return;
-      if (!sheetConfigured()){
-        showConfirm("Desmarcar as "+doneCount+" loja"+(doneCount===1?"":"s")+" deste supervisor? "+NAO_CONFIG_MSG, function(){
+      if (!podeEnviar()){
+        showConfirm("Desmarcar as "+doneCount+" loja"+(doneCount===1?"":"s")+" deste supervisor? "+msgNaoEnvia(), function(){
           assignments[currentSup] = {}; orders[currentSup] = {};
           saveAssignments(); renderAll();
         }, "Desmarcar tudo");
@@ -1663,7 +1681,7 @@
 
     document.getElementById("saveBtn").addEventListener("click", function(){
       if (!currentSup || this.disabled) return;
-      if (!sheetConfigured()){ showConfirm(NAO_CONFIG_MSG); return; } // não trava sem ter para onde enviar
+      if (!podeEnviar()){ showConfirm(msgNaoEnvia()); return; } // não trava sem poder enviar e confirmar
       // guarda o supervisor: se a pessoa trocar o seletor durante o envio, o resultado
       // continua indo para quem gravou (antes usava currentSup e quebrava/gravava no errado)
       var sup = currentSup;
